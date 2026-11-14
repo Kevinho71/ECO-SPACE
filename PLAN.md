@@ -1,15 +1,17 @@
 # Abandoned but not Forgotten — Plan detallado
 
 > Storytelling sobre el equipo descartado de la NASA en la Luna, Marte y más allá.
-> Experiencia web interactiva en 3D con Three.js + React, narración por audio (AWS Polly) y robots que "despiertan" para contar su propia historia.
+> Experiencia web interactiva en **primera persona** con Three.js + React: vives la historia *siendo* el robot, con un feed de cámara con estática/glitch y un corte eléctrico final.
 
 ---
 
 ## 1. Visión y concepto
 
-Una **galería-museo 3D de exploradores olvidados**. El visitante (estudiante de primaria/secundaria o curioso) navega un mapa del sistema solar, elige un escenario (Luna / Marte / Más allá) y luego una misión. Al seleccionarla, el robot **cobra vida** en su entorno real (la superficie lunar, el polvo de Marte, el vacío del espacio profundo) y **narra su propia historia en primera persona**, con voz generada por AWS Polly, subtítulos sincronizados y un cuerpo articulado que gesticula (esqueletos/skinning) y cambia de expresión (morph targets).
+Una **galería-museo 3D de exploradores olvidados** vivida **en primera persona**. El visitante (estudiante de primaria/secundaria o curioso) navega un mapa del sistema solar, elige un escenario (Luna / Marte / Más allá) y luego una misión. Al seleccionarla **se convierte en el robot**: la cámara es su "ojo" (el mástil/Pancam), la narración es su monólogo interno en primera persona (voz AWS Polly, subtítulos sincronizados) y el usuario mira a su alrededor desde dentro de la máquina.
 
-**Pilar narrativo (del reto):** *"mostrar cómo operaron, no enumerar datos"*. Cada robot cuenta un arco emocional —no una ficha técnica— pero con rigor histórico (datos sacados de NSSDC y science.nasa.gov).
+La experiencia se presenta como un **feed de cámara real**: un overlay de telemetría con **estática, scanlines y glitch** que se intensifica en los momentos de tensión. Al terminar la misión, ocurre el **corte eléctrico**: la señal se degrada a estática y se apaga, dejando al usuario en silencio dentro del robot.
+
+**Pilar narrativo (del reto):** *"mostrar cómo operaron, no enumerar datos"*. El usuario *vive* un arco emocional —no lee una ficha técnica— con rigor histórico (datos de NSSDC y science.nasa.gov).
 
 ---
 
@@ -20,21 +22,25 @@ Inicio / Portada
    └─ "El cementerio de las estrellas" (título evocador)
    └─ Elige ubicación:  🌕 Luna  |  🔴 Marte  |  🪐 Más allá
         └─ Catálogo de misiones (tarjetas 3D con miniatura del robot)
-             └─ Escena cinematográfica de la misión
-                  ├─ Narración (AWS Polly) + subtítulos por capítulos
-                  ├─ Modo "Explorar" (360° / órbita libre)
-                  ├─ Inspector de características (hotspots sobre partes)
+             └─ Experiencia en primera persona (POV del robot)
+                  ├─ Narración en primera persona (AWS Polly) + subtítulos por capítulos
+                  ├─ Feed de cámara con estática/glitch (overlay de telemetría)
+                  ├─ Mirar alrededor (look) desde el "ojo" del robot
+                  ├─ Modo "Inspección" (vista exterior opcional, 360°/órbita)
+                  ├─ Inspector de características (hotspots sobre partes propias)
                   ├─ Línea de tiempo de la misión
                   │    └─ Punto de bifurcación "¿Qué pasaría si…?" (rama opcional, etiquetada)
                   │         └─ "Reality check" → regresa a la historia real
-                  └─ "La última transmisión" (final emocional)
+                  └─ Corte eléctrico final (feed → estática → apagado)
                        └─ Vuelve al catálogo
 ```
 
 **Principios UX:**
-- Navegación por capítulos con *skip*, *replay* y *saltar a explorar*.
-- Todo clickeable en el 3D: partes del robot revelan características a demanda.
-- Cámara con órbita libre (OrbitControls) en modo exploración; cámara guiada (tween) en modo historia.
+- **POV por defecto:** el usuario *es* el robot; mira alrededor con el ratón/touch (look), no con órbita externa.
+- Feed de cámara con **estática/glitch** siempre presente como capa visual, modulada por la intensidad narrativa.
+- Navegación por capítulos con *skip*, *replay* y *saltar a inspección exterior*.
+- Todo clickeable: al mirar las partes propias (brazo, paneles) se revelan características a demanda.
+- **Corte eléctrico** al final: la señal se degrada a estática y se apaga; el regreso al catálogo es posterior.
 - La historia real es siempre el camino por defecto; el "what if" solo se activa por acción explícita del usuario y queda siempre marcado como hipotético.
 
 ---
@@ -48,25 +54,29 @@ Inicio / Portada
 | 3D | **three.js** | Motor de la escena |
 | Binding React | **@react-three/fiber (R3F)** | Componentes declarativos de Three en React |
 | Helpers 3D | **@react-three/drei** | OrbitControls, useGLTF, Environment, Text, Float, Html |
-| Post-proceso | **@react-three/postprocessing** | Bloom, profundidad de campo, grading cinematográfico |
+| Post-proceso | **@react-three/postprocessing** | Bloom, DoF, grading, **estática/glitch (shader propio)** |
+| Controles POV | **Pointer Lock API / drei** | Look en primera persona (ratón/touch) |
 | Estado | **Zustand** | Estado global de la escena/misión/audio, sin boilerplate |
-| UI | **Tailwind CSS + shadcn/ui** | Overlay glassmorphism rápido y accesible |
+| UI | **Tailwind CSS + shadcn/ui** | Overlay glassmorphism + HUD de telemetría |
 | Animación UI | **framer-motion** | Transiciones de UI/overlay |
-| Animación cámara | **GSAP** o `maath` (tween) | Movimientos de cámara cinematográficos |
+| Animación cámara | **GSAP** o `maath` (tween) | Movimientos de cámara en inspección exterior |
 | Subtítulos | Componente propio sincronizado | WebVTT o JSON de marcas de tiempo |
 
 ### 3D / Assets
 - Modelos en **Blender**, exportados a **glTF/GLB** con:
   - **Esqueleto (armature)** → *skinning* para articulaciones (ruedas, mástil, paneles, antena, brazos).
   - **Morph targets (blend shapes)** → "expresiones": atenuar luces, abrir paneles, bajar antena, acumular polvo.
+  - **Nodo "ojo" (POV)** → un Empty/hueso en la cámara del robot para anclar la vista en primera persona.
 - **Draco compression** para GLB ligeros.
-- Estilo visual: **low-poly estilizado pero reconocible** (silueta fiel al hardware real), como el personaje del ejemplo de Three.js.
+- Estilo visual: **low-poly estilizado pero reconocible** (silueta fiel al hardware real), texturas PBR de la NASA cuando aplique (dominio público).
 
 ### Audio / AWS
 | Componente | Tecnología |
 |------------|-----------|
-| Narración TTS | **AWS Polly** (voces Neural, con SSML) |
+| Narración TTS | **AWS Polly** (voces Neural, con SSML) — monólogo interno del robot |
 | Efectos ambientales | Web Audio API (viento marciano, silencio lunar, telemetría) |
+| Estática/glitch (sonido) | Ruido blanco filtrado + clics de señal |
+| Corte eléctrico | Power-down (tono que baja + clic de relé) → silencio |
 | Música | Loop ambiental sutil (opcional, generado o licencia libre) |
 | Subtítulos | Transcritos manualmente + marcas de tiempo (Precisión > ASR) |
 | Almacenamiento | Amazon S3 (audios mp3) + CloudFront (opcional) |
@@ -109,23 +119,26 @@ ecospace/
 │  │  ├─ catalog.ts           # tipos + datos curados
 │  │  └─ missions/            # un .ts/.json por misión
 │  ├─ store/
-│  │  └─ useAppStore.ts       # Zustand: escenario, misión, capítulo, modo real/hipotético, audio
+│  │  └─ useAppStore.ts       # Zustand: escenario, misión, capítulo, modo real/hipotético, staticLevel, audio
 │  ├─ three/
 │  │  ├─ Scene.tsx            # Canvas raíz
 │  │  ├─ Robot.tsx            # carga GLB, useAnimations, morph
 │  │  ├─ Environment.tsx      # superficie + cielo/estrellas
-│  │  ├─ CameraRig.tsx        # cámara guiada vs órbita libre
+│  │  ├─ PovCamera.tsx        # cámara POV en el "ojo" + look (pointer lock)
+│  │  ├─ CameraRig.tsx        # cámara guiada para inspección exterior
+│  │  ├─ StaticOverlay.tsx    # feed de cámara: estática/glitch + corte eléctrico
 │  │  ├─ Hotspots.tsx         # puntos de características
 │  │  └─ effects.ts           # postprocessing
 │  ├─ audio/
 │  │  ├─ PollyClient.ts       # wrapper de AWS Polly (o fetch a Lambda)
 │  │  ├─ useNarration.ts      # hook: reproducir, pausar, subtítulos
-│  │  └─ ambient.ts           # Web Audio API
+│  │  └─ ambient.ts           # Web Audio API (estática, power-down)
 │  ├─ ui/
 │  │  ├─ Cover.tsx
 │  │  ├─ LocationPicker.tsx
 │  │  ├─ Catalog.tsx
 │  │  ├─ StoryOverlay.tsx     # subtítulos + controles capítulo
+│  │  ├─ Hud.tsx              # overlay de telemetría (batería, señal, timestamp)
 │  │  ├─ WhatIf.tsx           # rama hipotética + badge + reality-check
 │  │  ├─ Inspector.tsx        # características a demanda
 │  │  └─ Timeline.tsx
@@ -152,6 +165,7 @@ interface Mission {
   endDate: string;            // fin de la misión (o "activo")
   status: "active" | "inactive" | "lost-contact";
   modelPath: string;          // "models/mars/opportunity.glb"
+  povAnchor?: string;         // nodo del GLB que sirve de "ojo" del robot (POV)
   summary: string;            // 1-2 frases
   facts: {                    // Inspector de características
     label: string;
@@ -179,7 +193,10 @@ interface Chapter {
   audioKey: string;           // audio/moon/eagle_01.mp3
   transcript: string;         // texto para subtítulos
   cues: { time: number; text: string }[]; // subtítulos sincronizados
-  camera?: "wide" | "close" | "orbit" | "inspect";
+  camera?: "pov" | "inspect" | "orbit" | "wide" | "close";
+  pov?: string;               // anclaje del "ojo" para el POV (p.ej. "mast_cam")
+  staticLevel?: number;       // intensidad de estática/glitch (0-1)
+  powerCut?: boolean;         // true en el capítulo del corte eléctrico final
   morph?: string;             // blend shape a activar
   animation?: string;         // clip a reproducir
 }
@@ -249,16 +266,29 @@ useFrame((state, delta) => {
 ```
 
 - **Materiales con emissive** para la "luz de estatus" que se enciende/apaga al despertar.
-- **CameraRig:** interpola posición/objetivo de cámara según el capítulo (GSAP/maath).
+- **PovCamera:** la cámara se ancla al nodo "ojo" del robot (mástil/cámara) y el usuario mira alrededor con look en primera persona (Pointer Lock).
+- **CameraRig:** interpola posición/objetivo de cámara solo en el modo de inspección exterior (GSAP/maath).
+- **StaticOverlay:** post-proceso de feed de cámara — estática procedimental, scanlines y glitch — cuya intensidad la controla `Chapter.staticLevel`.
+- **PowerCut:** en el capítulo final, `staticLevel` sube a 1 y la escena se apaga (fade a negro + corte de audio).
 - **Hotspots:** `drei <Html>` anclado a huesos para el inspector de características.
-- **Órbita libre:** `OrbitControls` se activa solo en modo exploración.
+- **Órbita libre:** `OrbitControls` se activa solo en el modo de inspección exterior.
+
+### Cámara en primera persona (POV)
+- La cámara se sitúa en `povAnchor` (el "ojo" del robot) y hereda su orientación.
+- Controles: **look** con ratón/touch (Pointer Lock API), sin traslación libre (el robot no se mueve en su entorno salvo lo que la historia indique).
+- El overlay de telemetría (HUD) refuerza la sensación de estar "dentro" de la máquina.
+
+### Estática, glitch y corte eléctrico
+- **Estática/glitch:** shader de post-proceso (ruido procedural + distorsión UV + scanlines + aberración cromática). Intensidad modulada por `staticLevel` y por eventos (aterrizaje, tormenta, pérdida de señal).
+- **Corte eléctrico final:** secuencia de cierre → el feed sube a estática total → la escena y el audio se apagan bruscamente → silencio/negro → regreso suave al catálogo.
+- Este corte *es* la "última transmisión", pero vivida desde dentro: la máquina deja de "ver" y de "oír".
 
 ---
 
 ## 7. Audio y AWS Polly
 
 ### Flujo
-1. Guion curado por misión (con rigor histórico).
+1. Guion curado por misión (con rigor histórico), escrito como **monólogo interno en primera persona**.
 2. SSML con pausas, énfasis (`<prosody>`, `<break>`) y entonación natural.
 3. Generar mp3 con **Polly Neural** (voz masculina/femenina según el "personaje" del robot). Ej. `Joanna`/`Matthew` (EN) o es-ES/MX si quieres español.
 4. Subir a S3, servir por CloudFront, reproducir con `<audio>`/Howler.
@@ -283,23 +313,28 @@ export async function synthesize(text: string, voice: string): Promise<string> {
 - **Marte:** viento débil filtrado (paso-banda) + crujidos de polvo.
 - **Espacio profundo:** pitidos de telemetría distantes, casi silencio.
 - **Transiciones:** "wake-up" sound (power-on) cuando el robot despierta.
+- **Estática/glitch (sonido):** ruido blanco filtrado y clics de señal que acompañan al overlay visual.
+- **Corte eléctrico:** power-down (tono que baja + clic de relé) seguido de silencio absoluto.
 
 ---
 
 ## 8. Narrativa — estructura y ejemplos
 
+### Registro narrativo (primera persona)
+El narrador es el propio robot (primera persona). El usuario no observa a un robot contar su historia: **la está viviendo**. El monólogo interno, el feed con estática y el corte eléctrico final refuerzan esa identificación.
+
 ### Arco narrativo por misión (5 capítulos)
-1. **El despertar** — El robot "abre los ojos" (morph: luz de estatus). Se presenta en primera persona. Contexto: quién es, cuándo y por qué fue enviado.
-2. **El viaje** — Del lanzamiento a la llegada. La emoción y el riesgo. (Cámara wide + animación de despliegue.)
+1. **El despertar** — El usuario "abre los ojos" como el robot: el feed arranca con estática y se estabiliza. Monólogo interno de presentación. Contexto: quién soy, cuándo y por qué fui enviado.
+2. **El viaje** — Del lanzamiento a la llegada, vivido desde dentro. La emoción y el riesgo. (Estática en el aterrizaje + animación de despliegue.)
 3. **La misión** — Descubrimientos contados como aventura, no como lista. (Ej. "Encontré pruebas de que aquí hubo agua…").
-4. **El final** — La última transmisión, el silencio. Momento emocional. (Morph: luz que se atenúa, antena que baja.)
-5. **El legado** — Qué dejó para las misiones de hoy. Reflexión final y llamada a la curiosidad.
+4. **El final** — La señal se degrada. Momento emocional desde dentro. (Morph: luz que se atenúa; `staticLevel` subiendo.)
+5. **El corte eléctrico y el legado** — El feed se apaga (corte eléctrico). Silencio. Luego, una voz serena cierra el legado: qué dejó para las misiones de hoy.
 
 ### Ejemplo A — 🔴 Opportunity (Marte)
 > *"Hola. Soy Oppy. Nací para durar 90 días… y viví 15 años."*
 > - **Viaje:** 7 meses, aterrizaje con airbags rebotando.
-> - **Misión:** encontró "blueberries" de hematita → evidencia de agua pasada; recorrió más de 45 km.
-> - **Final (cita real):** *"My battery is low and it's getting dark."* (junio 2018, tormenta de polvo global).
+> - **Misión:** encontré "blueberries" de hematita → evidencia de agua pasada; recorrí más de 45 km.
+> - **Final (cita real):** *"My battery is low and it's getting dark."* (junio 2018, tormenta de polvo global) → corte eléctrico.
 > - **Legado:** Spirit y Opportunity prepararon el camino para Curiosity y Perseverance.
 
 ### Ejemplo B — 🌕 Apollo 11 LM "Eagle" (etapa de descenso)
@@ -345,10 +380,12 @@ El "what if" no es fantasía: es un **contrafactual educativo** que parte de un 
 ## 9. UI/UX — overlay
 
 - **Estilo:** glassmorphism oscuro (paneles translúcidos) sobre la escena 3D, tipografía grande y legible para estudiantes.
+- **HUD de telemetría (POV):** overlay con batería, señal, timestamp y "REC/cámara" que refuerza estar "dentro" del robot; se degrada a la par del `staticLevel`.
+- **Estática/glitch:** capa visual permanente con intensidad variable; en el corte final llena la pantalla y se apaga.
 - **Inspector de características:** al hacer clic en un hotspot, panel lateral con el dato (p.ej. "Pancam: 2 cámaras, 1024×1024") y la explicación en lenguaje simple.
 - **Línea de tiempo:** barra horizontal con hitos de la misión, clicable. El camino real es una línea sólida; las ramas hipotéticas se dibujan en **línea punteada** con badge "HIPOTÉTICO" y botón persistente "Volver a la historia real".
 - **Controles de audio:** reproducir/pausar, velocidad, subtítulos on/off.
-- **Accesibilidad:** subtítulos, contraste, navegación por teclado, textos alternativos.
+- **Accesibilidad:** subtítulos, contraste, navegación por teclado, textos alternativos, opción de reducir/desactivar estática y look automático.
 
 ---
 
@@ -359,10 +396,10 @@ El "what if" no es fantasía: es un **contrafactual educativo** que parte de un 
 | **0. Investigación** | Curar datos de 3 misiones (Eagle, Opportunity, Pioneer 10) desde NSSDC/science.nasa.gov | 2-3 días |
 | **1. Esqueleto** | Vite + React + TS + R3F + Tailwind + Zustand; escena vacía con planeta/estrellas | 1-2 días |
 | **2. Catálogo** | JSON tipado + UI de selección Luna/Marte/Más allá | 1-2 días |
-| **3. Robot 1** | Modelo GLB con skinning + morph (Blender) e integración en R3F | 4-6 días |
-| **4. Narración** | Guion + Polly SSML + reproducción + subtítulos sincronizados | 2-3 días |
-| **5. Interacción** | Hotspots, inspector, timeline, cámara guiada vs órbita libre | 3-4 días |
-| **6. Pulido** | Postprocessing, SFX, transiciones, performance (Draco, lazy loading) | 2-3 días |
+| **3. Robot 1** | Modelo GLB con skinning + morph + nodo "ojo" (POV) (Blender) e integración en R3F | 4-6 días |
+| **4. Narración** | Guion en primera persona + Polly SSML + reproducción + subtítulos sincronizados | 2-3 días |
+| **5. Interacción** | Cámara POV + look, hotspots, inspector, timeline, cámara de inspección exterior | 3-4 días |
+| **6. Pulido** | Estática/glitch, corte eléctrico, SFX, transiciones, performance (Draco, lazy loading) | 2-3 días |
 | **7. Escalado** | Añadir misiones restantes del catálogo | continuo |
 
 ---
@@ -370,21 +407,24 @@ El "what if" no es fantasía: es un **contrafactual educativo** que parte de un 
 ## 11. Riesgos y consideraciones
 
 - **Precisión (crítico):** validar fechas, citas y cifras contra NSSDC/science.nasa.gov. No inventar "últimas palabras" si no están documentadas (las de Opportunity e InSight sí lo están).
+- **Mareo en POV (motion sickness):** mirar en primera persona puede marear; incluir sensibilidad ajustable, desactivar look automático y ofrecer la vista exterior como alternativa.
+- **Estática/glitch excesiva:** puede molestar o reducir legibilidad; limitar intensidad/frecuencia y permitir desactivarla (accesibilidad).
 - **Performance:** GLB con Draco, carga diferida por misión, límite de luces, texturas comprimidas. Apuntar a < 5 MB por misión.
 - **Costo de Polly:** Neural TTS es barato; cachear mp3 en S3 (no regenerar).
 - **Precisión de los "what if":** cada rama hipotética debe nacer de un hecho o near-miss documentado y estar siempre etiquetada como tal; jamás presentar el contrafactual como historia real.
 - **Accesibilidad:** siempre subtítulos; el audio es complemento, no única vía.
-- **Mobile:** OrbitControls táctiles, overlay responsive, reducir postprocessing en móvil.
+- **Mobile:** look táctil en POV, overlay responsive, reducir postprocessing en móvil.
 
 ---
 
 ## 12. Siguientes pasos concretos
 
 1. **Elegir el MVP:** recomiendo **Opportunity** como primera misión completa (historia más emotiva y documentada).
-2. **Curar el guion** de Opportunity (5 capítulos, ~60-90 s de audio por capítulo).
+2. **Curar el guion en primera persona** de Opportunity (5 capítulos, ~60-90 s de audio por capítulo), con su corte eléctrico final.
 3. **Montar el boilerplate** Vite + React + R3F + Tailwind.
-4. **Modelar** Opportunity en Blender (o partir de un asset base y personalizar).
+4. **Modelar** Opportunity en Blender (o partir de un asset base y personalizar) **con un nodo "ojo" (POV)** para la cámara en primera persona.
 5. **Crear la Lambda de Polly** y generar el primer capítulo de audio.
 6. **Definir 1-2 "what if"** por misión MVP (basados en hechos reales) con su reality-check.
+7. **Implementar el feed de estática** y el corte eléctrico final (shader de post-proceso).
 
-¿Quieres que empiece ya con alguna de estas fases? Por ejemplo, puedo montarte el boilerplate del proyecto (fase 1) o escribir el guion completo de Opportunity (fase 0/4).
+¿Quieres que empiece ya con alguna de estas fases? Por ejemplo, el boilerplate (fase 1), el guion en primera persona de Opportunity (fase 0/4), o el shader de estática/corte eléctrico.
