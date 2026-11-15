@@ -74,8 +74,9 @@ def build():
                 radius=0.04)
 
     # ---- Animaciones ----
+    # Idle: giro suave del mástil (es también el ojo del POV)
     rh.add_clip("Idle", {
-        "mast_head": {"rot": rh.loop("rot", [0.0, 0.5, 0.0, -0.5], 96, "Z")},
+        "mast_head": {"rot": rh.loop("rot", [0.0, 0.26, 0.0, -0.26], 120, "Z")},
         "antenna": {"rot": rh.loop("rot", [0.0, 0.06, 0.0, -0.06], 96, "Y")},
     })
     rh.add_clip("Wake", {

@@ -1,5 +1,6 @@
 import { useAppStore, type LocationId } from '../store/useAppStore'
 import { MISSIONS } from '../data/catalog'
+import { getStory } from '../story/StoryDirector'
 
 const LOCATION_LABEL: Record<LocationId, string> = {
   moon: 'Luna',
@@ -18,9 +19,10 @@ export function Overlay() {
   const setCameraMode = useAppStore((s) => s.setCameraMode)
 
   const mission = MISSIONS.find((m) => m.id === selectedMissionId)
+  const hasStory = !!getStory(selectedMissionId)
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-10">
+    <div className="pointer-events-none absolute inset-0 z-20">
       {stage === 'planet-map' && selectedLocation && (
         <div className="flex h-full flex-col items-center justify-between py-6">
           <div className="flex flex-col items-center px-6 text-center">
@@ -50,14 +52,19 @@ export function Overlay() {
               Volver
             </button>
             <p className="text-sm text-slate-300">{mission.name}</p>
-            <button
-              onClick={() => setCameraMode(cameraMode === 'free' ? 'guided' : 'free')}
-              className="pointer-events-auto rounded-full border border-white/20 px-4 py-2 text-sm text-slate-300 transition hover:bg-white/10"
-            >
-              {cameraMode === 'free' ? 'Modo Guiado' : 'Modo Libre'}
-            </button>
+            {hasStory ? (
+              <span className="w-16" />
+            ) : (
+              <button
+                onClick={() => setCameraMode(cameraMode === 'free' ? 'guided' : 'free')}
+                className="pointer-events-auto rounded-full border border-white/20 px-4 py-2 text-sm text-slate-300 transition hover:bg-white/10"
+              >
+                {cameraMode === 'free' ? 'Modo Guiado' : 'Modo Libre'}
+              </button>
+            )}
           </div>
 
+          {!hasStory && (
           <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-8">
             <p className="max-w-xl px-6 text-center text-lg text-white/90">
               “Hola. Soy {mission.nickname ?? mission.name}.”
@@ -67,6 +74,7 @@ export function Overlay() {
               <span>Cap 1 · Cap 2 · Cap 3 · Cap 4 · ¿Qué pasaría si?</span>
             </div>
           </div>
+          )}
         </>
       )}
     </div>

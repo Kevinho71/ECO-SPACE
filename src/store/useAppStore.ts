@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { Expression, StoryCard } from '../data/story'
 
 export type ViewStage = 'splash' | 'solar-map' | 'planet-map' | 'mission-scene'
 export type LocationId = 'moon' | 'mars' | 'beyond'
@@ -22,6 +23,20 @@ interface AppState {
   veil: boolean
   arrival: Arrival
 
+  // Historia (piloto Opportunity). Los valores continuos viven en `storyRuntime` (src/story/runtime.ts).
+  storyStarted: boolean
+  storyEnded: boolean
+  storyView: 'pov' | 'wide'
+  storyScene: 'surface' | 'flight'
+  storyClip: string | null
+  storyExpression: Expression
+  cueIndex: number
+  activeCard: StoryCard | null
+  chapterBanner: number // se incrementa al empezar un capítulo (dispara el título)
+  subtitlesOn: boolean
+  soundOn: boolean
+  reduceEffects: boolean
+
   // Interacción 3D
   cameraMode: CameraMode
   activeHotspotId: string | null
@@ -35,6 +50,7 @@ interface AppState {
   toggleWhatIf: (active: boolean) => void
   setCameraMode: (mode: CameraMode) => void
   selectHotspot: (id: string | null) => void
+  patchStory: (p: Partial<AppState>) => void
   /** Funde a negro, ejecuta `fn` (cambio de escena) y vuelve a mostrar. Ignora llamadas mientras hay una en curso. */
   transitionTo: (fn: () => void) => void
   /** Vuelve de la escena de un robot al mapa planetario (con acercamiento inverso). */
@@ -55,6 +71,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Por defecto en 'free' para poder rotar el modelo en el arranque.
   cameraMode: 'free',
   activeHotspotId: null,
+  storyStarted: false,
+  storyEnded: false,
+  storyView: 'pov',
+  storyScene: 'surface',
+  storyClip: null,
+  storyExpression: null,
+  cueIndex: -1,
+  activeCard: null,
+  chapterBanner: 0,
+  subtitlesOn: true,
+  soundOn: true,
+  reduceEffects: false,
   veil: false,
   arrival: 'enter',
 
@@ -67,6 +95,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   toggleWhatIf: (active) => set({ isWhatIfActive: active }),
   setCameraMode: (mode) => set({ cameraMode: mode }),
   selectHotspot: (id) => set({ activeHotspotId: id }),
+  patchStory: (p) => set(p),
   transitionTo: (fn) => {
     if (transitioning) return
     transitioning = true

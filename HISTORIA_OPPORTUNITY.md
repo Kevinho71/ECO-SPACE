@@ -393,3 +393,24 @@ Para que cada capítulo sea defendible ante un revisor:
 14. Snopes — verificación de la "última frase": https://www.snopes.com/fact-check/opportunity-rovers-final-words/
 
 > Las citas de NASA (Squyres, Watkins) se muestran en inglés original con traducción al español; la traducción es nuestra.
+
+---
+
+## 12. Estado de implementación (piloto jugable)
+
+El piloto ya corre en la app (entrar a **Marte → Opportunity**). Voces pendientes: la narración es solo subtítulos; `audioKey` de cada capítulo queda reservado.
+
+| Pieza | Dónde |
+|---|---|
+| Guion transcrito (cues, estática, polvo, HUD, cartas, sfx) | `src/data/stories/opportunity.ts` · tipos en `src/data/story.ts` |
+| Motor de reproducción (tiempo, capítulos, saltos, pausa) | `src/story/StoryDirector.tsx` · valores en `src/story/runtime.ts` |
+| Sonido sintetizado (viento, estática, tono, cohetes, apagado) | `src/story/audio.ts` |
+| Cámara POV (ojo del robot + mirada libre) y vista exterior | `src/three/StoryCamera.tsx` |
+| Tormenta de polvo (cielo, niebla, luz, Sol) | `src/three/environments/MarsScene.tsx` · `src/three/Sun.tsx` |
+| Feed: estática, glitch, vibración, corte CRT | `src/ui/story/StaticOverlay.tsx` |
+| Telemetría y registro de vuelo | `src/ui/story/Hud.tsx` · `src/ui/story/FlightLog.tsx` |
+| Subtítulos, título de capítulo, citas, línea de tiempo, controles, tarjeta de transparencia | `src/ui/story/StoryOverlay.tsx` |
+| Modo exploración: hotspots + inspector técnico | `src/three/Hotspots.tsx` · `src/data/hotspots.ts` |
+
+**Accesibilidad incluida:** subtítulos activables, sonido on/off, "reducir estática y vibración" (también en la pantalla de inicio), pausa y salto por capítulo. **Revisión pendiente:** §10 (datos por verificar, voces, revisión docente).
+**En desarrollo** (`npm run dev`) están disponibles `window.__story.seek(capítulo, segundo)` y `window.__store` para saltar a cualquier punto.

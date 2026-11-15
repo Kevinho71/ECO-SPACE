@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { storyRuntime } from '../story/runtime'
 
 export type Expression = 'Sad' | 'Surprised' | 'Sleep' | null
 
@@ -9,20 +10,33 @@ interface RobotProps {
   path: string
   /** Expresión facial (morph target de la malla `face`). */
   expression?: Expression
-  /** Clip a reproducir en bucle tras despertar (p. ej. 'Idle', 'Drive', 'Fly', 'Dig'). */
-  clip?: string
+  /**
+   * Clip dirigido por la historia. Si es `undefined`, el robot actúa solo (Wake → Idle).
+   * Si es `null`, queda quieto en su pose de reposo.
+   */
+  clip?: string | null
+  /** Pausa las animaciones (pausa de la historia). */
+  paused?: boolean
+  /** Si es true, la posición X del robot sigue a `storyRuntime.robotX`. */
+  followRuntime?: boolean
 }
+
+/** Clips que se reproducen una vez y se quedan en su última pose. */
+const ONCE = new Set(['Wake', 'Death', 'Open', 'Land'])
+/** Velocidad de reproducción por clip (la muerte va en cámara lenta). */
+const SPEED: Record<string, number> = { Death: 0.4 }
 
 /**
  * Carga el GLB de una misión (estilo "Robot Expressive") y le da vida:
- *  - clip `Wake` al aparecer y luego el clip en bucle (`Idle` por defecto),
+ *  - clips de animación (`Wake`, `Idle`, `Drive`, `Death`…) con fundido entre ellos,
  *  - parpadeo aleatorio y expresiones con los morph targets de `face`,
  *  - pulso de la luz de estado (`status_light`, material emisivo).
  */
-export function Robot({ path, expression = null, clip = 'Idle' }: RobotProps) {
+export function Robot({ path, expression = null, clip, paused = false, followRuntime = false }: RobotProps) {
   const group = useRef<THREE.Group>(null)
   const { scene, animations } = useGLTF(path)
   const { actions, mixer } = useAnimations(animations, group)
+  const current = useRef<THREE.AnimationAction | null>(null)
 
   const status = useMemo(() => (scene.getObjectByName('status_light') as THREE.Mesh | undefined) ?? null, [scene])
 
@@ -47,9 +61,10 @@ export function Robot({ path, expression = null, clip = 'Idle' }: RobotProps) {
     })
   }, [scene])
 
-  // Despertar -> bucle.
+  // --- Modo autónomo (sin historia): despertar -> bucle ---
   useEffect(() => {
-    const loop = actions[clip] ?? actions['Idle']
+    if (clip !== undefined) return
+    const loop = actions['Idle']
     const wake = actions['Wake'] ?? actions['Open'] // Pathfinder despierta abriendo sus pétalos
     if (wake && loop && wake !== loop) {
       wake.reset().setLoop(THREE.LoopOnce, 1)
@@ -73,14 +88,48 @@ export function Robot({ path, expression = null, clip = 'Idle' }: RobotProps) {
     }
   }, [actions, mixer, clip])
 
+  // --- Modo dirigido (historia): clip actual con fundido ---
+  useEffect(() => {
+    if (clip === undefined) return
+    if (clip === null) {
+      mixer.stopAllAction()
+      current.current = null
+      return
+    }
+    const next = actions[clip]
+    if (!next) return
+    const prev = current.current
+    const once = ONCE.has(clip)
+    next.reset()
+    next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity)
+    next.clampWhenFinished = once
+    next.timeScale = SPEED[clip] ?? 1
+    next.play()
+    if (prev && prev !== next) prev.crossFadeTo(next, 0.35, false)
+    else next.fadeIn(0.2)
+    current.current = next
+  }, [clip, actions, mixer])
+
+  useEffect(
+    () => () => {
+      mixer.stopAllAction()
+    },
+    [mixer],
+  )
+
   const blink = useRef({ next: 2.5, t: -1 })
 
   useFrame(({ clock }, dt) => {
-    // Luz de estado
+    mixer.timeScale = paused ? 0 : 1
+    if (followRuntime && group.current) group.current.position.x = storyRuntime.robotX
+
+    // Luz de estado: late; se apaga con la batería y con el corte eléctrico.
     if (status) {
       const mat = status.material as THREE.MeshStandardMaterial | undefined
       if (mat && 'emissiveIntensity' in mat) {
-        mat.emissiveIntensity = 0.6 + 0.9 * (0.5 + 0.5 * Math.sin(clock.elapsedTime * 2.5))
+        const alive = followRuntime ? Math.max(0, storyRuntime.battery * 6) * (1 - storyRuntime.powerOff) : 1
+        const power = Math.min(1, alive)
+        mat.emissiveIntensity = power * (0.6 + 0.9 * (0.5 + 0.5 * Math.sin(clock.elapsedTime * 2.5)))
       }
     }
     // Cara: expresión + parpadeo
@@ -88,11 +137,9 @@ export function Robot({ path, expression = null, clip = 'Idle' }: RobotProps) {
       const d = face.morphTargetDictionary
       const inf = face.morphTargetInfluences
       const k = Math.min(1, dt * 6)
-      for (const name of ['Sad', 'Surprised', 'Sleep']) {
+      for (const name of ['Sad', 'Surprised']) {
         const i = d[name]
-        const target = expression === name ? 1 : 0
-        if (name === 'Sleep') continue
-        inf[i] = THREE.MathUtils.lerp(inf[i], target, k)
+        inf[i] = THREE.MathUtils.lerp(inf[i], expression === name ? 1 : 0, k)
       }
       const b = blink.current
       const t = clock.elapsedTime

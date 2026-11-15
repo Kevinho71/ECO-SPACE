@@ -49,3 +49,19 @@ body {
 .splash-tracking {
   animation: splashTracking 1.2s ease-out forwards;
 }
+
+/* Subtítulos y tarjetas de la historia: aparecen suavemente. */
+@keyframes subtitleIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.subtitle-in {
+  animation: subtitleIn 0.45s ease-out both;
+}

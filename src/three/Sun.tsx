@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { storyRuntime } from '../story/runtime'
 import { useTexture } from '@react-three/drei'
 
 // El Sol usa una imagen REAL del Solar Dynamics Observatory (NASA/SDO): luz visible (HMI)
@@ -41,10 +42,13 @@ export function SunBody({ radius = 1.4, position = [0, 0, 0] as [number, number,
   const corona = useMemo(makeCoronaTexture, [])
   const billboard = useRef<THREE.Group>(null)
   const coronaMesh = useRef<THREE.Mesh>(null)
+  const discMat = useRef<THREE.MeshBasicMaterial>(null)
   const bright = useMemo(() => new THREE.Color().setScalar(1.15), [])
 
   useFrame(({ camera, clock }) => {
     billboard.current?.quaternion.copy(camera.quaternion)
+    // Con la tormenta de polvo de la historia, el Sol se vuelve un disco pálido y apagado.
+    if (discMat.current) discMat.current.color.setScalar(1.15 * (1 - 0.8 * (storyRuntime.active ? storyRuntime.dust : 0)))
     if (coronaMesh.current) coronaMesh.current.scale.setScalar(1 + 0.03 * Math.sin(clock.elapsedTime * 1.3))
   })
 
@@ -66,6 +70,7 @@ export function SunBody({ radius = 1.4, position = [0, 0, 0] as [number, number,
         <mesh position={[0, 0, radius * 1.02]} renderOrder={2}>
           <planeGeometry args={[discSize, discSize]} />
           <meshBasicMaterial
+            ref={discMat}
             map={sun}
             color={bright}
             transparent
