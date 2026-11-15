@@ -221,4 +221,144 @@ export const HOTSPOTS: Record<string, Hotspot[]> = {
       offset: [0, 0.2, 0],
     },
   ],
+  pioneer10: [
+    {
+      id: 'dish',
+      node: 'dish_mesh',
+      title: 'Antena de plato',
+      fact: 'Al final, la señal tardaba más de 11 horas en llegar',
+      explain:
+        'Un plato que apuntaba a la Tierra. Al final de la misión, cada señal tardaba más de once horas en llegar: la sonda hablaba desde tan lejos que cada respuesta llegaba muy tarde.',
+      offset: [0, 0.3, 0],
+    },
+    {
+      id: 'rtg',
+      node: 'rtg_boom_L',
+      title: 'Generadores nucleares (RTG)',
+      fact: 'Pioneer 10 fue la primera nave con energía solo nuclear',
+      explain:
+        'Convierten el calor de un material radiactivo en electricidad, porque tan lejos del Sol los paneles solares no servirían. Con los años, esa electricidad bajó hasta que ya no alcanzó para el transmisor.',
+      offset: [0, 0.25, 0],
+    },
+    {
+      id: 'mag',
+      node: 'mag_boom',
+      title: 'Magnetómetro',
+      fact: 'Midió el campo magnético de Júpiter y su gran cola',
+      explain:
+        'Un brazo largo que aleja los sensores del cuerpo de la nave. Sus medidas ayudaron a descubrir que la magnetosfera de Júpiter tiene una cola que llega casi hasta la órbita de Saturno.',
+      offset: [0, 0.2, 0],
+    },
+    {
+      id: 'plaque',
+      node: 'golden_plaque',
+      title: 'Placa para quien la encuentre',
+      fact: 'Aluminio, con un hombre, una mujer y el Sistema Solar',
+      explain:
+        'Una placa de aluminio con dibujos: un hombre y una mujer, el Sistema Solar y la posición del Sol entre catorce púlsares. La idea fue de Carl Sagan. Nadie sabe si alguien la encontrará.',
+      offset: [0, 0.1, 0],
+    },
+    {
+      id: 'antenna',
+      node: 'antenna_omni',
+      title: 'Antena omnidireccional',
+      fact: 'Comunicación que no necesitaba apuntar con precisión',
+      explain:
+        'Recibe y envía señales en todas direcciones. Era la antena de respaldo, para cuando el plato principal no estaba bien orientado.',
+      offset: [0, 0.2, 0],
+    },
+  ],
+  eagle: [
+    {
+      id: 'ladder',
+      node: 'ladder',
+      title: 'Escalera',
+      fact: 'Por aquí bajaron los dos primeros humanos en la Luna',
+      explain:
+        'Armstrong bajó primero y pisó el polvo lunar a las 02:56 UT del 21 de julio de 1969 (la noche del 20 en Florida). Después bajó Aldrin. En una de las patas, detrás de la escalera, va una placa que ambos leyeron en voz alta.',
+      offset: [0.5, 0.6, 0],
+    },
+    {
+      id: 'seismometer',
+      node: 'seismometer',
+      title: 'Sismómetro',
+      fact: 'Escuchaba los temblores de la Luna',
+      explain:
+        'Forma parte del paquete de experimentos EASEP (48 kg en total): un sismómetro pasivo, hecho para medir la actividad sísmica de la Luna. Quedó a unos 17 m del módulo.',
+      offset: [0, 0.45, 0],
+    },
+    {
+      id: 'reflector',
+      node: 'laser_reflector',
+      title: 'Reflector láser',
+      fact: '100 cubos de cristal · sin energía · precisión ~2 cm',
+      explain:
+        'Cien «cubos de esquina» de sílice en un panel de aluminio de 46 cm devuelven la luz láser hacia el lugar de donde vino. No necesita energía. Sirve para medir la distancia entre la Tierra y la Luna, y para comprobar que la Luna se aleja.',
+      offset: [0, 0.4, 0],
+    },
+    {
+      id: 'engine',
+      node: 'descent_engine',
+      title: 'Motor de descenso',
+      fact: 'Frenó la caída hasta posarse',
+      explain:
+        'Encendido unos 756 segundos para bajar hasta la superficie. Después de aterrizar, la etapa de descenso ya no se movió: sirvió de plataforma de lanzamiento para la cabina.',
+      offset: [0, -0.1, 0],
+    },
+    {
+      id: 'stage',
+      node: 'descent_stage',
+      title: 'Etapa de descenso',
+      fact: '2 034 kg en seco · 8 248 kg de combustible al inicio',
+      explain:
+        'La mitad de abajo del módulo lunar. Cuando la cabina despegó, esta etapa se quedó como plataforma de lanzamiento, y allí sigue.',
+      offset: [1.2, 0.3, 0],
+    },
+    {
+      id: 'legs',
+      node: 'footpad_0',
+      title: 'Patas con platos',
+      fact: 'Cuatro patas para no hundirse en el polvo',
+      explain: 'Cuatro patas con platos anchos que reparten el peso del módulo sobre el suelo lunar.',
+      offset: [0, 0.3, 0],
+    },
+  ],
+  surveyor3: [
+    {
+      id: 'tv',
+      node: 'tv_head',
+      title: 'Cámara de TV',
+      fact: 'Dos lentes (25 y 100 mm) · ~20 s por imagen',
+      explain:
+        'Miraba a través de un espejo móvil y envió 6 326 imágenes a la Tierra. Hoy está en el Museo Nacional del Aire y el Espacio (Smithsonian), en Washington D. C.',
+      offset: [0.4, 0.45, 0],
+    },
+    {
+      id: 'sampler',
+      node: 'sampler_lower',
+      title: 'Brazo con pala',
+      fact: 'Cuchara de 12 × 5 cm · cavó hasta 18 cm',
+      explain:
+        'Un brazo de 1,5 m con una cuchara. Cavó cuatro zanjas y repitió pruebas de carga y de impacto para saber cuánto aguantaba el suelo. La pala volvió a la Tierra con el Apolo 12.',
+      offset: [0.15, 0.25, 0],
+    },
+    {
+      id: 'solar',
+      node: 'solar_panel',
+      title: 'Panel solar',
+      fact: 'Sin Sol, sin energía',
+      explain:
+        'Su energía venía del Sol. Cuando llegó la noche lunar (unas dos semanas de oscuridad), la nave se quedó sin luz y no volvió a despertar.',
+      offset: [0, 0.2, 0],
+    },
+    {
+      id: 'legs',
+      node: 'footpad_0',
+      title: 'Patas',
+      fact: 'Tocó la Luna tres veces al aterrizar',
+      explain:
+        'Tres patas con platos de apoyo. En el aterrizaje los motores no se apagaron a tiempo y la nave tocó el suelo tres veces antes de quedarse quieta.',
+      offset: [0, 0.3, 0],
+    },
+  ],
 }

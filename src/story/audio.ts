@@ -1,6 +1,6 @@
 import type { SfxKind } from '../data/story'
 
-// Sonido de la historia, sintetizado con Web Audio (sin archivos). Las voces (AWS Polly) están pendientes.
+// Sonido de la historia, sintetizado con Web Audio (sin archivos). Las voces son MP3 pregenerados con ElevenLabs (npm run voices).
 // - Viento de Marte (ruido filtrado) que se intensifica con el polvo.
 // - Estática del feed de cámara.
 // - Tono grave de telemetría que se ralentiza con la batería.
@@ -14,6 +14,130 @@ let tone: { osc: OscillatorNode; gain: GainNode } | null = null
 let noiseBuf: AudioBuffer | null = null
 let enabled = true
 let paused = false
+
+// --- Música de fondo: una pista por tipo de capítulo, en bucle, con fundido entre pistas ---
+const MUSIC_LEVEL = 0.32
+const MUSIC_FADE = 2.5 // s
+interface MusicTrack {
+  el: HTMLAudioElement
+  gain: GainNode
+}
+const music = new Map<string, MusicTrack>()
+let musicId: string | null = null
+
+function musicTrack(id: string): MusicTrack | null {
+  if (!ctx || !master) return null
+  let t = music.get(id)
+  if (!t) {
+    const el = new Audio(`${import.meta.env.BASE_URL}audio/music/${id}.mp3`)
+    el.loop = true
+    el.preload = 'auto'
+    const gain = ctx.createGain()
+    gain.gain.value = 0
+    ctx.createMediaElementSource(el).connect(gain).connect(master)
+    t = { el, gain }
+    music.set(id, t)
+  }
+  return t
+}
+
+/** Cambia la música con un fundido cruzado. `null` la apaga. Si ya suena esa pista no hace nada. */
+export function setMusic(id: string | null) {
+  if (!ctx || id === musicId) return
+  const now = ctx.currentTime
+  const prev = musicId ? music.get(musicId) : null
+  if (prev) {
+    prev.gain.gain.cancelScheduledValues(now)
+    prev.gain.gain.setTargetAtTime(0, now, MUSIC_FADE / 3)
+    const el = prev.el
+    setTimeout(() => {
+      if (musicId !== [...music].find(([, t]) => t.el === el)?.[0]) el.pause()
+    }, MUSIC_FADE * 1000 + 300)
+  }
+  musicId = id
+  if (!id) return
+  const t = musicTrack(id)
+  if (!t) return
+  t.el.currentTime = 0
+  if (!paused) void t.el.play().catch(() => undefined)
+  t.gain.gain.cancelScheduledValues(now)
+  t.gain.gain.setTargetAtTime(MUSIC_LEVEL, now, MUSIC_FADE / 3)
+}
+
+function musicDuck() {
+  if (!ctx || !musicId) return
+  const t = music.get(musicId)
+  t?.gain.gain.setTargetAtTime(MUSIC_LEVEL * (voiceBusy ? 0.55 : 1), ctx.currentTime, 0.4)
+}
+
+// --- Voz (MP3 de ElevenLabs en public/audio/voice) ---
+let voiceEl: HTMLAudioElement | null = null
+let voiceGain: GainNode | null = null
+let voiceManifest: Record<string, { f: string; d: number }> | null = null
+let voiceLoading = false
+let voicePending: string | null = null
+let voiceBusy = false
+
+function loadVoiceManifest() {
+  if (voiceManifest || voiceLoading) return
+  voiceLoading = true
+  fetch(`${import.meta.env.BASE_URL}audio/voice/manifest.json`)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => {
+      voiceManifest = j
+      if (voicePending && !voiceBusy) {
+        const k = voicePending
+        voicePending = null
+        playVoiceFile(k)
+      }
+    })
+    .catch(() => undefined)
+    .finally(() => (voiceLoading = false))
+}
+
+function playVoiceFile(key: string) {
+  const entry = voiceManifest?.[key]
+  if (!ctx || !master || !entry) return
+  if (!voiceEl) {
+    voiceEl = new Audio()
+    voiceEl.preload = 'auto'
+    voiceGain = ctx.createGain()
+    voiceGain.gain.value = 1
+    ctx.createMediaElementSource(voiceEl).connect(voiceGain).connect(master)
+    voiceEl.addEventListener('ended', () => {
+      voiceBusy = false
+      if (voicePending) {
+        const k = voicePending
+        voicePending = null
+        playVoiceFile(k)
+      }
+    })
+  }
+  voiceEl.src = `${import.meta.env.BASE_URL}audio/voice/${entry.f}`
+  voiceBusy = true
+  void voiceEl.play().catch(() => (voiceBusy = false))
+}
+
+/** Dice una línea del guion. Si aún suena la anterior, la deja terminar y entra justo después (solo se guarda la última). */
+export function speak(key: string) {
+  if (!ctx) return
+  if (!voiceManifest) {
+    voicePending = key // el manifiesto aún se está cargando
+    loadVoiceManifest()
+    return
+  }
+  if (voiceBusy) voicePending = key
+  else playVoiceFile(key)
+}
+
+export function stopVoice() {
+  voicePending = null
+  voiceBusy = false
+  if (voiceEl) {
+    voiceEl.pause()
+    voiceEl.removeAttribute('src')
+  }
+}
 
 function makeNoise(c: AudioContext): AudioBuffer {
   const len = c.sampleRate * 2
@@ -44,6 +168,7 @@ export function startAudio() {
   const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
   if (!AC) return
   ctx = new AC()
+  loadVoiceManifest()
   noiseBuf = makeNoise(ctx)
   master = ctx.createGain()
   master.gain.value = enabled && !paused ? 0.8 : 0
@@ -94,6 +219,15 @@ export function setAudioPaused(p: boolean) {
 }
 
 function applyMaster() {
+  const mt = musicId ? music.get(musicId) : null
+  if (mt) {
+    if (paused) mt.el.pause()
+    else void mt.el.play().catch(() => undefined)
+  }
+  if (voiceEl) {
+    if (paused) voiceEl.pause()
+    else if (voiceBusy) void voiceEl.play().catch(() => undefined)
+  }
   if (!ctx || !master) return
   master.gain.setTargetAtTime(enabled && !paused ? 0.8 : 0, ctx.currentTime, 0.05)
 }
@@ -110,9 +244,10 @@ export interface AmbientState {
 /** Actualiza el ambiente continuo (se llama cada fotograma). */
 export function updateAmbient(s: AmbientState) {
   if (!ctx || !wind || !stat || !tone) return
+  musicDuck()
   const now = ctx.currentTime
   const surface = s.scene === 'surface' ? 1 : 0
-  const alive = 1 - s.powerOff
+  const alive = (1 - s.powerOff) * (voiceBusy ? 0.5 : 1) // el ambiente baja mientras habla la voz
   wind.gain.gain.setTargetAtTime((0.025 + 0.11 * s.dust) * surface * alive, now, 0.2)
   wind.filter.frequency.setTargetAtTime(320 + 520 * s.dust, now, 0.3)
   stat.gain.gain.setTargetAtTime(Math.min(0.2, s.staticLevel * 0.2) * alive, now, 0.08)
@@ -201,6 +336,10 @@ export function playSfx(kind: SfxKind) {
       beep(38, 4.5, 0.25, 'sine', 24)
       burst({ dur: 4.5, freq: 90, gain: 0.5, sweepTo: 40 })
       break
+    case 'alarm':
+      // dos pares de pitidos secos
+      ;[0, 0.22, 0.6, 0.82].forEach((d) => setTimeout(() => beep(1050, 0.14, 0.09, 'square'), d * 1000))
+      break
     case 'hammer':
       ;[0, 0.18, 0.36, 0.54].forEach((d) => setTimeout(() => burst({ dur: 0.07, freq: 900, gain: 0.3, type: 'bandpass' }), d * 1000))
       break
@@ -212,6 +351,8 @@ export function playSfx(kind: SfxKind) {
 }
 
 export function stopAudio() {
+  stopVoice()
+  setMusic(null)
   if (ctx) {
     void ctx.suspend()
   }

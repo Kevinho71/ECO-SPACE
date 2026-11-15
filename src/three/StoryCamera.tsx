@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { useAppStore } from '../store/useAppStore'
 import { storyRuntime } from '../story/runtime'
 import { getStory } from '../story/StoryDirector'
-import { sampleStep } from '../data/story'
+import { sampleLinear, sampleStep, type WideShot } from '../data/story'
 import { flightShot } from './environments/flightPath'
 import { placeHeight, surfaceDef } from './environments/places'
 
@@ -15,6 +15,9 @@ const MAX_YAW = (75 * Math.PI) / 180
 const MAX_PITCH = (35 * Math.PI) / 180
 const BASE_PITCH = -0.2
 const EAGLE = surfaceDef('eagle')
+const ORIGIN = new THREE.Vector3()
+const WORLD_UP = new THREE.Vector3(0, 1, 0)
+const DEFAULT_WIDE_TARGET: [number, number, number] = [0, 0.85, 0]
 
 /**
  * Cámara de la historia.
@@ -38,6 +41,7 @@ export function StoryCamera() {
   // La cabeza mira hacia +X local; la cámara mira hacia -Z local.
   const fix = useMemo(() => new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -Math.PI / 2, 0)), [])
   const m4 = useMemo(() => new THREE.Matrix4(), [])
+  const levelQ = useMemo(() => new THREE.Quaternion(), [])
   const wideTarget = useMemo(() => new THREE.Vector3(0, 0.85, 0), [])
   const wideQuat = useMemo(() => new THREE.Quaternion(), [])
   const partTarget = useMemo(() => new THREE.Vector3(), [])
@@ -95,6 +99,10 @@ export function StoryCamera() {
     const gait = reduce ? 0.3 : 1
 
     if (view === 'pov') {
+      // La cabeza es el mástil (rovers) o el alimentador de la antena (sondas): el "ojo" cuelga de ella.
+      if (!head.current || !head.current.parent)
+        head.current =
+          scene.getObjectByName('mast_head') ?? scene.getObjectByName('feed_head') ?? scene.getObjectByName('face_plate') ?? scene.getObjectByName('tv_head') ?? null
       if (!eye.current || !eye.current.parent) eye.current = scene.getObjectByName('pov_eye') ?? null
       // Orientación: el mástil (rovers) o, si no hay, el nodo padre del ojo (Ingenuity: su `pov_eye` apunta hacia abajo).
       if (!head.current || !head.current.parent) head.current = scene.getObjectByName('mast_head') ?? eye.current?.parent ?? null
@@ -104,7 +112,16 @@ export function StoryCamera() {
         // Posición: el "ojo", un poco por delante de los ojos de la cara.
         eye.current.getWorldPosition(pos)
         fwd.set(0, 0, -1).applyQuaternion(q)
-        pos.addScaledVector(fwd, head.current?.name === 'mast_head' ? 0.1 : 0.45)
+        // Los rovers y sondas miran desde su cabeza (0,1 m); en Ingenuity el ojo está más adelante (0,45 m).
+        const named = ['mast_head', 'feed_head', 'face_plate', 'tv_head'].includes(head.current?.name ?? '')
+        pos.addScaledVector(fwd, named ? 0.1 : 0.45)
+        // Horizonte estable (p. ej. una sonda que gira sobre sí misma): mezcla con una orientación sin alabeo.
+        const keepRoll = sampleLinear(getStory(s.selectedMissionId)?.chapters[storyRuntime.chapter]?.povRoll, storyRuntime.t, 1)
+        if (keepRoll < 0.999) {
+          m4.lookAt(ORIGIN, fwd, WORLD_UP)
+          levelQ.setFromRotationMatrix(m4)
+          q.slerp(levelQ, 1 - keepRoll)
+        }
         // Mirada del usuario (relativa a la cámara de la historia) + panorámica automática.
         // Arrastrar mueve "el mundo" con el dedo: derecha → giro a la izquierda; abajo → mira arriba.
         // Base: mirada ligeramente hacia abajo para que se vea parte de la cubierta del rover.
@@ -188,22 +205,25 @@ export function StoryCamera() {
       setFov(cam, 50, 3, dt)
       wideTarget.set(0, 0.85, 0)
     } else {
-      // Vista exterior: órbita lenta alrededor del robot (y a su altura, si vuela).
-      sway.current += dt * 0.04
-      const a = 0.9 + Math.sin(sway.current) * 0.35
-      const vw = getStory(s.selectedMissionId)?.view
-      const r = vw?.wideDist ?? 7.5
-      const ty = vw?.wideTarget ?? 0.85
+      // Vista exterior: órbita lenta alrededor del robot (y a su altura, si vuela). Cada capítulo puede fijarla con `wide`;
+      // si no, usa `story.view` (distancia y altura del objetivo) o los valores por defecto.
+      const st = getStory(s.selectedMissionId)
+      const w = sampleStep<WideShot | null>(st?.chapters[storyRuntime.chapter]?.wide, storyRuntime.t, null)
+      const vw = st?.view
       const ay = storyRuntime.alt * 0.9
-      pos.set(Math.cos(a) * r, ty + 1.45 * (r / 7.5) + ay, Math.sin(a) * r)
-      wideTarget.y = ty + ay
+      const ty = vw?.wideTarget ?? DEFAULT_WIDE_TARGET[1]
+      const tg = w?.target ?? [DEFAULT_WIDE_TARGET[0], ty, DEFAULT_WIDE_TARGET[2]]
+      wideTarget.set(tg[0], tg[1] + ay, tg[2])
+      sway.current += dt * 0.04
+      const a = (w?.az ?? 0.9) + Math.sin(sway.current) * (w?.swing ?? 0.35)
+      const r = w?.dist ?? vw?.wideDist ?? 7.5
+      pos.set(tg[0] + Math.cos(a) * r, w?.height ?? tg[1] + 1.45 * (r / 7.5) + ay, tg[2] + Math.sin(a) * r)
       m4.lookAt(pos, wideTarget, camera.up)
       wideQuat.setFromRotationMatrix(m4)
       const k = 1 - Math.exp(-dt * 2.2)
       camera.position.lerp(pos, k)
       camera.quaternion.slerp(wideQuat, k)
-      setFov(cam, WIDE_FOV, 3, dt)
-      wideTarget.y = 0.85
+      setFov(cam, w?.fov ?? WIDE_FOV, 3, dt)
     }
     void state
   })

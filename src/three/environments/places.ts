@@ -1,10 +1,10 @@
 import type * as THREE from 'three'
-import type { PlaceId } from '../../data/story'
+import type { DeepPlaceId, LunarPlaceId, PlaceId } from '../../data/story'
 import { terrainHeight, type TerrainOpts } from '../lib/terrain'
 import { buildTerrainGeometry } from './Terrain'
 
-/** Lugares con superficie de Marte. ('launch' / 'cruise' / 'entry' son escenas del espacio: ver FlightScene). */
-export type SurfacePlace = Exclude<PlaceId, 'launch' | 'cruise' | 'entry'>
+/** Lugares con superficie. ('launch'/'cruise'/'entry' son escenas del viaje: FlightScene; los DeepPlaceId, del espacio profundo: DeepSpace). */
+export type SurfacePlace = Exclude<PlaceId, 'launch' | 'cruise' | 'entry' | DeepPlaceId | LunarPlaceId>
 
 export interface PlaceDef {
   sky: string

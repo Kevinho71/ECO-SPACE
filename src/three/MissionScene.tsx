@@ -11,6 +11,10 @@ import { Hotspots } from './Hotspots'
 import { LunarScene } from './environments/LunarScene'
 import { MarsScene } from './environments/MarsScene'
 import { SpaceScene } from './environments/SpaceScene'
+import type { DeepPlaceId } from '../data/story'
+import { DeepSpace } from './environments/DeepSpace'
+import { isDeepPlace } from './environments/deepPlaces'
+import { MISSION_EXTRAS } from './extras'
 import { FlightScene } from './environments/FlightScene'
 import { Landing } from './Spacecraft'
 
@@ -43,6 +47,9 @@ export function MissionScene() {
   if (!mission) return null
 
   const inSpace = mission.location === 'beyond'
+  // Lugares sin suelo de la historia (espacio profundo, órbita, descenso): sustituyen al escenario habitual.
+  const deep = hasStory && isDeepPlace(storyPlace)
+  const Extra = MISSION_EXTRAS[mission.id]
 
   return (
     <>
@@ -50,11 +57,13 @@ export function MissionScene() {
         <Stars radius={120} depth={60} count={3000} factor={4} saturation={0} fade speed={0.4} />
       )}
 
-      {mission.location === 'moon' && <LunarScene />}
+      {mission.location === 'moon' && !deep && <LunarScene />}
       {mission.location === 'mars' && !inFlight && <MarsScene />}
       {inFlight && <FlightScene place={storyPlace as 'launch' | 'cruise' | 'entry'} />}
       {hasStory && chapter === 1 && storyPlace === 'eagle' && <Landing />}
-      {inSpace && <SpaceScene />}
+      {/* Con historia, el espacio profundo cambia según el lugar de la narrativa; sin ella, el escenario genérico. */}
+      {deep ? <DeepSpace place={storyPlace as DeepPlaceId} /> : inSpace && <SpaceScene />}
+      {Extra && <Extra />}
 
       <Suspense fallback={null}>
         {hasStory ? (

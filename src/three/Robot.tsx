@@ -25,8 +25,8 @@ interface RobotProps {
 
 /** Clips que se reproducen una vez y se quedan en su última pose. */
 const ONCE = new Set(['Wake', 'Death', 'Open', 'Land'])
-/** Velocidad de reproducción por clip (la muerte va en cámara lenta). */
-const SPEED: Record<string, number> = { Death: 0.4, 'Drive!': 0.4 }
+/** Velocidad de reproducción por clip (la muerte va en cámara lenta; el giro de una sonda, pausado). */
+const SPEED: Record<string, number> = { Death: 0.4, 'Drive!': 0.4, Spin: 0.3 }
 
 /**
  * Carga el GLB de una misión (estilo "Robot Expressive") y le da vida:
@@ -174,9 +174,11 @@ export function Robot({ path, expression = null, clip, hold = null, paused = fal
       const slip = storyRuntime.slip
       const t = clock.elapsedTime
       g.visible = storyRuntime.robotVisible
-      g.position.set(0, storyRuntime.alt - storyRuntime.sink + Math.sin(t * 31) * 0.012 * slip, 0)
-      g.rotation.z = storyRuntime.pitch - storyRuntime.tilt + Math.sin(t * 17) * 0.012 * slip
-      g.rotation.x = storyRuntime.roll + Math.sin(t * 23 + 1) * 0.02 * slip
+      // Pistas opcionales de la historia: `lift` (m), `tilt` y `bank` (rad), p. ej. una nave apoyada en una ladera.
+      const tr = storyRuntime.tracks
+      g.position.set(0, storyRuntime.alt - storyRuntime.sink + (tr.lift ?? 0) + Math.sin(t * 31) * 0.012 * slip, 0)
+      g.rotation.z = storyRuntime.pitch - storyRuntime.tilt + (tr.tilt ?? 0) + Math.sin(t * 17) * 0.012 * slip
+      g.rotation.x = storyRuntime.roll + (tr.bank ?? 0) + Math.sin(t * 23 + 1) * 0.02 * slip
       // Las ruedas giran según la velocidad (o patinan).
       if (driveAction.current) {
         const sp = storyRuntime.speed

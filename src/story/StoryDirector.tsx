@@ -5,8 +5,11 @@ import { opportunityStory } from '../data/stories/opportunity'
 import { ingenuityStory } from '../data/stories/ingenuity'
 import { insightStory } from '../data/stories/insight'
 import { pathfinderStory } from '../data/stories/pathfinder'
+import { pioneer10Story } from '../data/stories/pioneer10'
+import { eagleStory } from '../data/stories/eagle'
+import { surveyor3Story } from '../data/stories/surveyor3'
 import { resetRuntime, storyRuntime } from './runtime'
-import { playSfx, setAudioPaused, setSoundEnabled, startAudio, stopAudio, updateAmbient } from './audio'
+import { playSfx, setAudioPaused, setSoundEnabled, setMusic, speak, startAudio, stopVoice, stopAudio, updateAmbient } from './audio'
 
 /** Historias disponibles por misión. Las demás misiones todavía no tienen guion. */
 const STORIES: Record<string, Story> = {
@@ -14,6 +17,9 @@ const STORIES: Record<string, Story> = {
   ingenuity: ingenuityStory,
   insight: insightStory,
   pathfinder: pathfinderStory,
+  pioneer10: pioneer10Story,
+  eagle: eagleStory,
+  surveyor3: surveyor3Story,
 }
 
 export function getStory(missionId: string | null): Story | null {
@@ -28,6 +34,13 @@ export function placeAt(ch: StoryChapter, t: number): PlaceId {
   let p = ch.place0
   for (const j of ch.jumps ?? []) if (t >= j.t + BLINK_SWAP) p = j.to
   return p
+}
+
+/** Segundo del capítulo en que empezó el lugar actual (el cambio ocurre en lo más oscuro del parpadeo). */
+function placeEntry(ch: StoryChapter, t: number): number {
+  let e = 0
+  for (const j of ch.jumps ?? []) if (t >= j.t + BLINK_SWAP) e = j.t + BLINK_SWAP
+  return e
 }
 
 /** Cuánto están cerrados los párpados (0–1) en el instante t. */
@@ -118,6 +131,7 @@ export function StoryDirector() {
     let firedSfx = new Set<number>()
     let firedBlink = new Set<number>()
     let lastKey = ''
+    let lastCue = -1
 
     jumpTo = (ci, to = 0) => {
       if (ci >= st.chapters.length) {
@@ -127,11 +141,13 @@ export function StoryDirector() {
         setAudioPaused(true)
         return
       }
+      stopVoice()
       chapter = Math.max(0, ci)
       t = to
       firedSfx = new Set()
       firedBlink = new Set()
       lastKey = ''
+      lastCue = -1
       storyRuntime.chapter = chapter
       useAppStore.getState().patchStory({
         currentChapterIndex: chapter,
@@ -174,6 +190,10 @@ export function StoryDirector() {
       storyRuntime.sink = sampleLinear(ch.sink, t, 0)
       storyRuntime.slip = sampleLinear(ch.slip, t, 0) * (s.isPlaying ? 1 : 0)
       storyRuntime.blink = blinkAt(ch, t)
+      storyRuntime.placeT = t - placeEntry(ch, t)
+      // Pistas numéricas con nombre: las que no tiene este capítulo vuelven a 0.
+      for (const k in storyRuntime.tracks) storyRuntime.tracks[k] = 0
+      for (const k in ch.tracks ?? {}) storyRuntime.tracks[k] = sampleLinear(ch.tracks?.[k], t, 0)
       storyRuntime.robotVisible = sampleStep(ch.robot, t, true)
       storyRuntime.alt = sampleLinear(ch.alt, t, 0)
       storyRuntime.tilt = sampleLinear(ch.tilt, t, 0) * (s.reduceEffects ? 0.5 : 1)
@@ -209,6 +229,15 @@ export function StoryDirector() {
           storyPlace: place,
           storyPart: part,
         })
+      }
+
+      // Música: una pista por tipo de capítulo (compartida entre historias)
+      if (s.storyStarted && !s.storyEnded) setMusic(ch.id)
+
+      // Voz: una línea por subtítulo
+      if (cue !== lastCue) {
+        lastCue = cue
+        if (cue >= 0 && s.storyStarted && s.isPlaying) speak(`${st.missionId}|${ch.id}|${cue}`)
       }
 
       // Efectos de sonido puntuales
