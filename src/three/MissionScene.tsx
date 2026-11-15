@@ -11,6 +11,8 @@ import { Hotspots } from './Hotspots'
 import { LunarScene } from './environments/LunarScene'
 import { MarsScene } from './environments/MarsScene'
 import { SpaceScene } from './environments/SpaceScene'
+import { FlightScene } from './environments/FlightScene'
+import { Landing } from './Spacecraft'
 
 export function MissionScene() {
   const missionId = useAppStore((s) => s.selectedMissionId)
@@ -22,6 +24,9 @@ export function MissionScene() {
   const camera = useThree((s) => s.camera)
   const mission = MISSIONS.find((m) => m.id === missionId)
   const hasStory = !!getStory(missionId)
+  const storyPlace = useAppStore((s) => s.storyPlace)
+  const chapter = useAppStore((s) => s.currentChapterIndex)
+  const inFlight = hasStory && (storyPlace === 'launch' || storyPlace === 'cruise' || storyPlace === 'entry')
 
   // Al pasar a exploración libre, la cámara vuelve a una órbita cómoda alrededor del robot.
   useEffect(() => {
@@ -40,12 +45,14 @@ export function MissionScene() {
 
   return (
     <>
-      {mission.location !== 'mars' && (
+      {mission.location !== 'mars' && !inFlight && (
         <Stars radius={120} depth={60} count={3000} factor={4} saturation={0} fade speed={0.4} />
       )}
 
       {mission.location === 'moon' && <LunarScene />}
-      {mission.location === 'mars' && <MarsScene />}
+      {mission.location === 'mars' && !inFlight && <MarsScene />}
+      {inFlight && <FlightScene place={storyPlace as 'launch' | 'cruise' | 'entry'} />}
+      {hasStory && chapter === 1 && storyPlace === 'eagle' && <Landing />}
       {inSpace && <SpaceScene />}
 
       <Suspense fallback={null}>

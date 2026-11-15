@@ -15,39 +15,54 @@ export const opportunityStory: Story = {
       id: 'despertar',
       title: 'Capítulo 1 · El despertar',
       subtitle: 'Sol 1 · Meridiani Planum, Marte',
-      duration: 76,
+      duration: 96,
       audioKey: 'mars/opportunity_01.mp3',
+      place0: 'eagle',
       cues: [
         { t: 0, text: 'Señal… estable. Sistemas… despertando.' },
         { t: 5, text: 'Abro los ojos. Primero solo hay luz… y polvo anaranjado.' },
         { t: 11, text: 'Un llano rojizo, plano, hasta donde alcanzo a ver.' },
-        { t: 16, text: 'Soy Opportunity. Los ingenieros me llaman Oppy.' },
+        { t: 16, text: 'Soy Opportunity. Los ingenieros me llaman Oppy. Déjame enseñarte cómo soy.' },
+        { t: 21, text: 'Estos son mis ojos: dos cámaras en lo alto de un mástil, a casi un metro y medio del suelo.' },
+        { t: 27, text: 'Este es mi brazo, con microscopio y herramientas de geólogo: puedo raspar una roca para mirar por dentro.' },
+        { t: 34, text: 'Estos son mis paneles solares. Beben la luz del Sol: sin Sol, no tengo energía.' },
+        { t: 40, text: 'Tengo seis ruedas con una suspensión que se adapta al terreno. Soy lento: menos de cuatro centímetros por segundo.' },
+        { t: 47, text: 'Y esta antena me permite hablar con la Tierra.' },
+        { t: 53, text: 'Estoy en Marte. Dentro de un cráter pequeño, en una región llamada Meridiani Planum.' },
         {
-          t: 21,
-          text: 'Tengo seis ruedas, dos cámaras en un mástil que son mis ojos, un brazo con microscopio y herramientas de geólogo, y paneles que beben la luz del Sol.',
-        },
-        { t: 34, text: 'Estoy en Marte. Dentro de un cráter pequeño, en una región llamada Meridiani Planum.' },
-        {
-          t: 41,
+          t: 60,
           text: 'Me enviaron aquí porque, desde el cielo, vieron hematita: un mineral que casi siempre nace donde hubo agua.',
         },
-        { t: 50, text: 'Mi trabajo es leer estas rocas y responder una pregunta: ¿hubo agua aquí?' },
+        { t: 69, text: 'Mi trabajo es leer estas rocas y responder una pregunta: ¿hubo agua aquí?' },
         {
-          t: 56,
+          t: 75,
           text: 'Me dieron noventa soles —noventa días marcianos— para lograrlo. Tengo un gemelo, Spirit, al otro lado del planeta; llegó tres semanas antes.',
         },
-        { t: 69, text: 'Pero primero… déjame recordar cómo llegué.' },
+        { t: 89, text: 'Pero primero… déjame recordar cómo llegué.' },
       ],
-      camera: [{ t: 0, v: 'pov' }],
+      camera: [
+        { t: 0, v: 'pov' },
+        { t: 20.5, v: 'part' },
+        { t: 52.5, v: 'pov' },
+      ],
+      partFocus: [
+        { t: 0, v: null },
+        { t: 20.5, v: { node: 'mast_head', hotspot: 'pancam', dist: 1.7, az: 0.55, el: 0.12 } },
+        { t: 26.5, v: { node: 'arm', hotspot: 'arm', dist: 2.1, az: -0.3, el: 0.02 } },
+        { t: 33.5, v: { node: 'deck', hotspot: 'panels', dist: 3.6, az: 2.5, el: 0.5 } },
+        { t: 39.5, v: { node: 'wheel_RM', hotspot: 'wheels', dist: 3.0, az: 1.25, el: 0.12 } },
+        { t: 46.5, v: { node: 'antenna', hotspot: 'antenna', dist: 1.9, az: 2.5, el: 0.25 } },
+        { t: 52.5, v: null },
+      ],
       scene: [{ t: 0, v: 'surface' }],
       staticLevel: [
         { t: 0, v: 0.95 },
         { t: 4, v: 0.55 },
         { t: 9, v: 0.15 },
-        { t: 20, v: 0.08 },
-        { t: 62, v: 0.1 },
-        { t: 69, v: 0.5 },
-        { t: 76, v: 1 },
+        { t: 20, v: 0.06 },
+        { t: 82, v: 0.1 },
+        { t: 89, v: 0.5 },
+        { t: 96, v: 1 },
       ],
       battery: [{ t: 0, v: 1 }],
       signal: [
@@ -57,13 +72,19 @@ export const opportunityStory: Story = {
       clips: [
         { t: 0, v: 'Wake' },
         { t: 3, v: 'Idle' },
+        { t: 39.5, v: 'Drive' }, // las ruedas giran mientras las enseña
+        { t: 46.5, v: 'Idle' },
       ],
       expressions: [
         { t: 0, v: null },
         { t: 2, v: 'Surprised' },
         { t: 5.5, v: null },
       ],
-      hud: [{ t: 0, v: { sol: '001', date: '25 ENE 2004 (UTC)', place: MARS } }],
+      hud: [
+        { t: 0, v: { sol: '001', date: '25 ENE 2004 (UTC)', place: MARS } },
+        { t: 20.5, v: { sol: '001', date: '25 ENE 2004 (UTC)', place: MARS, phase: 'MIS PIEZAS' } },
+        { t: 52.5, v: { sol: '001', date: '25 ENE 2004 (UTC)', place: MARS } },
+      ],
       sfx: [{ t: 0, v: 'boot' }],
     },
 
@@ -76,6 +97,19 @@ export const opportunityStory: Story = {
       subtitle: 'Registro de vuelo · julio de 2003 → enero de 2004',
       duration: 94,
       audioKey: 'mars/opportunity_02.mp3',
+      place0: 'launch',
+      // Cortes con los ojos cerrados: pad de lanzamiento → espacio → entrada → descenso sobre el cráter → "abro los ojos".
+      jumps: [
+        { t: 22.5, to: 'cruise' },
+        { t: 29.9, to: 'cruise' }, // de mirar hacia la Tierra a mirar hacia Marte
+        { t: 37.5, to: 'entry' },
+        { t: 48.5, to: 'eagle' },
+        { t: 77.9, to: 'eagle' }, // abre los ojos dentro del robot
+      ],
+      robot: [
+        { t: 0, v: false },
+        { t: 78, v: true },
+      ],
       cues: [
         { t: 0, text: 'Reproduciendo mi registro de vuelo.' },
         {
@@ -100,28 +134,40 @@ export const opportunityStory: Story = {
         { t: 79, text: 'Se abren mis paneles. Durante cuatro días practico cómo bajar de mi plataforma.' },
         { t: 87, text: 'Y entonces mis ruedas tocan Marte por primera vez.' },
       ],
-      camera: [{ t: 0, v: 'pov' }],
+      camera: [
+        { t: 0, v: 'flight' },
+        { t: 78.2, v: 'pov' },
+      ],
       scene: [
         { t: 0, v: 'flight' },
-        { t: 78.5, v: 'surface' },
+        { t: 48.8, v: 'surface' },
       ],
       staticLevel: [
-        { t: 0, v: 0.3 },
-        { t: 5, v: 0.15 },
-        { t: 31, v: 0.3 },
-        { t: 38, v: 0.6 },
-        { t: 49, v: 0.85 },
-        { t: 60, v: 1 },
-        { t: 73, v: 1 },
-        { t: 78.5, v: 0.9 },
-        { t: 87, v: 0.2 },
+        { t: 0, v: 0.25 },
+        { t: 5, v: 0.12 },
+        { t: 22, v: 0.15 },
+        { t: 30, v: 0.1 },
+        { t: 37, v: 0.15 },
+        { t: 41, v: 0.5 },
+        { t: 48, v: 0.4 },
+        { t: 60, v: 0.3 },
+        { t: 65, v: 0.5 },
+        { t: 73, v: 0.25 },
+        { t: 78.2, v: 0.7 },
+        { t: 82, v: 0.2 },
         { t: 94, v: 0.15 },
       ],
       shake: [
         { t: 0, v: 0 },
-        { t: 49, v: 0.3 },
-        { t: 60, v: 0.8 },
-        { t: 73, v: 0.8 },
+        { t: 5.5, v: 0.15 },
+        { t: 21, v: 0.1 },
+        { t: 22, v: 0 },
+        { t: 38, v: 0.35 },
+        { t: 48, v: 0.2 },
+        { t: 49, v: 0.05 },
+        { t: 60, v: 0.25 },
+        { t: 65, v: 0.7 },
+        { t: 73, v: 0.2 },
         { t: 74.5, v: 0 },
       ],
       battery: [{ t: 0, v: 1 }],
@@ -134,7 +180,7 @@ export const opportunityStory: Story = {
       ],
       clips: [
         { t: 0, v: 'Idle' },
-        { t: 78.5, v: 'Wake' },
+        { t: 78.2, v: 'Wake' },
         { t: 89, v: 'Idle' },
       ],
       expressions: [
@@ -156,17 +202,6 @@ export const opportunityStory: Story = {
         { t: 79, v: { sol: '001', date: '25 ENE 2004 (UTC)', place: MARS, phase: 'PANELES DESPLEGADOS' } },
         { t: 87, v: { sol: '001', date: '25 ENE 2004 (UTC)', place: MARS, phase: 'EGRESO · 4 DÍAS' } },
       ],
-      flightEvents: [
-        { t: 5, label: 'Lanzamiento · 7 jul 2003 · Delta II' },
-        { t: 23, label: 'Crucero · ~7 meses' },
-        { t: 31, label: 'Fin del crucero · 11 dic 2003' },
-        { t: 38, label: 'Entrada · 19 300 km/h' },
-        { t: 49, label: 'Paracaídas' },
-        { t: 54, label: 'Retrocohetes · ~100 m' },
-        { t: 60, label: 'Airbags' },
-        { t: 65, label: 'Impacto · ~50 km/h' },
-        { t: 73, label: 'Detenido en un cráter pequeño' },
-      ],
       sfx: [
         { t: 5, v: 'rumble' },
         { t: 38, v: 'rumble' },
@@ -174,7 +209,7 @@ export const opportunityStory: Story = {
         { t: 54, v: 'retro' },
         { t: 60, v: 'airbag' },
         { t: 65, v: 'tumble' },
-        { t: 78.5, v: 'unfold' },
+        { t: 78.2, v: 'unfold' },
       ],
     },
 
@@ -187,6 +222,14 @@ export const opportunityStory: Story = {
       subtitle: 'Cráter Eagle → Purgatory Dune → Endeavour · 2004–2015',
       duration: 158,
       audioKey: 'mars/opportunity_03.mp3',
+      place0: 'eagle',
+      jumps: [
+        { t: 47.6, to: 'purgatory' },
+        { t: 97.6, to: 'plains' },
+        { t: 103.7, to: 'endurance' },
+        { t: 109.7, to: 'victoria' },
+        { t: 113.7, to: 'endeavour' },
+      ],
       marks: [
         { t: 0, label: 'Las esferas · 2004' },
         { t: 48, label: 'Atrapado en la arena · 2005' },
@@ -219,10 +262,8 @@ export const opportunityStory: Story = {
         { t: 88, text: 'Y cuando el viento limpia mis paneles, es como un regalo: vuelve la luz.' },
         // 3C
         { t: 98, text: 'Me pidieron recorrer mil metros. Sigo andando.' },
-        {
-          t: 104,
-          text: 'Bajo por las pendientes inclinadas de un cráter llamado Endurance. Exploro el cráter Victoria durante casi dos años.',
-        },
+        { t: 104, text: 'Bajo por las pendientes inclinadas de un cráter llamado Endurance.' },
+        { t: 110, text: 'Exploro el cráter Victoria durante casi dos años.' },
         {
           t: 114,
           text: 'En 2011 llego a otro cráter, Endeavour. Allí encuentro vetas de yeso y arcillas que se formaron en agua ni ácida ni básica: agua de pH neutro.',
@@ -237,25 +278,59 @@ export const opportunityStory: Story = {
         },
         { t: 146, text: 'En el JPL, mi equipo planea correr esa misma distancia en relevos, para celebrarlo conmigo.' },
       ],
-      camera: [{ t: 0, v: 'pov' }],
+      camera: [
+        { t: 0, v: 'pov' },
+        { t: 56, v: 'wide' }, // se ven las ruedas hundidas
+        { t: 70, v: 'pov' },
+        { t: 121, v: 'wide' }, // el rover rodando por el borde de Endeavour
+        { t: 132, v: 'pov' },
+      ],
       scene: [{ t: 0, v: 'surface' }],
       staticLevel: [
         { t: 0, v: 0.12 },
         { t: 4, v: 0.05 },
         { t: 158, v: 0.05 },
       ],
+      // Distancia recorrida en cada lugar (se reinicia con los ojos cerrados). La velocidad es acelerada a propósito
+      // para que se note el avance (el rover real iba a menos de 4 cm/s).
       robotX: [
         { t: 0, v: 0 },
-        { t: 98, v: 0 },
-        { t: 154, v: 3.2 },
+        { t: 71, v: 0 },
+        { t: 80, v: 3 },
+        { t: 97.8, v: 8 },
+        { t: 97.9, v: 0 },
+        { t: 103.7, v: 4.5 },
+        { t: 103.95, v: 4.5 },
+        { t: 104, v: 0 },
+        { t: 109.7, v: 4.5 },
+        { t: 109.95, v: 4.5 },
+        { t: 110, v: 0 },
+        { t: 113.7, v: 3 },
+        { t: 113.95, v: 3 },
+        { t: 114, v: 0 },
+        { t: 154, v: 30 },
+        { t: 158, v: 32 },
+      ],
+      // Atascado en Purgatory Dune: las ruedas se hunden y patinan; luego sale.
+      sink: [
+        { t: 0, v: 0 },
+        { t: 48, v: 0 },
+        { t: 54, v: 0.16 },
+        { t: 71, v: 0.16 },
+        { t: 78, v: 0 },
+      ],
+      slip: [
+        { t: 0, v: 0 },
+        { t: 48, v: 0 },
+        { t: 50, v: 1 },
+        { t: 71, v: 1 },
+        { t: 74, v: 0 },
       ],
       battery: [{ t: 0, v: 1 }],
       signal: [{ t: 0, v: 1 }],
       clips: [
         { t: 0, v: 'Idle' },
-        { t: 48, v: 'Drive' }, // las ruedas giran sin avanzar: está atascado
-        { t: 84, v: 'Idle' },
-        { t: 98, v: 'Drive' },
+        { t: 48, v: 'Drive' }, // las ruedas giran sin avanzar (atascado); después avanza
       ],
       expressions: [
         { t: 0, v: null },
@@ -297,6 +372,15 @@ export const opportunityStory: Story = {
       subtitle: 'Perseverance Valley · mayo–junio de 2018',
       duration: 78,
       audioKey: 'mars/opportunity_04.mp3',
+      place0: 'endeavour',
+      jumps: [{ t: 0.1, to: 'perseverance' }],
+      // Panorámica: la mirada barre el horizonte mientras "toma" las 354 fotos.
+      pan: [
+        { t: 0, v: -1.0 },
+        { t: 8, v: -1.0 },
+        { t: 20, v: 1.0 },
+        { t: 28, v: 0 },
+      ],
       cues: [
         {
           t: 0,
@@ -389,6 +473,7 @@ export const opportunityStory: Story = {
       subtitle: '10 de junio de 2018 → hoy',
       duration: 80,
       audioKey: 'mars/opportunity_05.mp3',
+      place0: 'perseverance',
       marks: [
         { t: 0, label: 'Corte eléctrico' },
         { t: 15, label: 'El legado' },

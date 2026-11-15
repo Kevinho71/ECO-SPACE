@@ -50,6 +50,15 @@ export const HOTSPOTS: Record<string, Hotspot[]> = {
       offset: [0, 0.2, 0],
     },
     {
+      id: 'wheels',
+      node: 'wheel_RM',
+      title: 'Seis ruedas',
+      fact: 'Suspensión rocker-bogie · 3,75 cm/s máx.',
+      explain:
+        'Seis ruedas con una suspensión que se adapta al terreno: sube rocas y baja pendientes sin volcar. Su velocidad máxima es de solo 3,75 centímetros por segundo.',
+      offset: [0, 0.35, 0],
+    },
+    {
       id: 'antenna',
       node: 'antenna',
       title: 'Antenas',

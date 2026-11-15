@@ -9,7 +9,7 @@ import { Overlay } from './ui/Overlay'
 import { Splash } from './ui/Splash'
 import { StoryDirector, getStory } from './story/StoryDirector'
 import { StaticOverlay } from './ui/story/StaticOverlay'
-import { FlightLog } from './ui/story/FlightLog'
+import { BlinkOverlay } from './ui/story/BlinkOverlay'
 import { Hud } from './ui/story/Hud'
 import { StoryOverlay } from './ui/story/StoryOverlay'
 
@@ -37,8 +37,8 @@ export default function App() {
       {hasStory && missionId && (
         <>
           <StoryDirector />
-          <FlightLog />
           <StaticOverlay />
+          <BlinkOverlay />
           {started && <Hud />}
           <div className="pointer-events-none absolute inset-0 z-[14]">
             <StoryOverlay missionId={missionId} />

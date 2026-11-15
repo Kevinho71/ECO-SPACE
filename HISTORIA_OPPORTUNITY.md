@@ -414,3 +414,22 @@ El piloto ya corre en la app (entrar a **Marte → Opportunity**). Voces pendien
 
 **Accesibilidad incluida:** subtítulos activables, sonido on/off, "reducir estática y vibración" (también en la pantalla de inicio), pausa y salto por capítulo. **Revisión pendiente:** §10 (datos por verificar, voces, revisión docente).
 **En desarrollo** (`npm run dev`) están disponibles `window.__story.seek(capítulo, segundo)` y `window.__store` para saltar a cualquier punto.
+
+---
+
+## 13. Escenarios, parpadeos y movimiento (v2)
+
+**Parpadeo = corte de escena.** Cada vez que el guion dice "llego a…", los párpados se cierran y, con los ojos cerrados, el escenario cambia (`jumps` en `src/data/stories/opportunity.ts`; `BlinkOverlay.tsx`).
+
+| Capítulo | Lugares (escenarios 3D) |
+|---|---|
+| 1 | Cráter Eagle (cuenco, afloramiento laminado, *blueberries*). **Demostración de piezas** (15–52 s): cámara en primer plano de mástil/Pancam, brazo, paneles, ruedas y antena, con rótulo (datos de `hotspots.ts`). |
+| 2 | Plataforma de lanzamiento (Delta II) → espacio (Tierra que se aleja, Marte que se acerca) → entrada (bola de fuego) → paracaídas, retrocohetes y airbags → rebotes sobre Eagle → "abro los ojos". |
+| 3 | Eagle → Purgatory Dune (dunas, ruedas hundidas y patinando) → llano de Meridiani → Endurance (pendiente) → Victoria (acantilados) → Endeavour (vetas claras de yeso). |
+| 4–5 | Perseverance Valley (canal en la ladera interior, polvo de la tormenta). Panorámica automática en el cap. 4. |
+
+**Sensación de caminar.** El robot no se desplaza: el suelo pasa por debajo (guijarros, rocas, huellas de las ruedas, polvo), el robot sigue el relieve (cabeceo y alabeo) y la cámara balancea con la suspensión.
+
+**Licencias narrativas añadidas (§8):** el viaje se ve con cámara exterior cinematográfica (el rover real viajaba plegado y no veía nada); la velocidad de avance está acelerada (~0,3–0,7 m/s; la real era de máx. 3,75 cm/s); relieve, colores, tamaño de las *blueberries* y trayectoria exacta de los rebotes son estilizados, sin datos de elevación reales. No se muestra el número de rebotes.
+
+**Código:** `src/three/environments/places.ts` (lugares), `Ground.tsx` (suelo, huellas, polvo), `FlightScene.tsx` + `flightPath.ts` + `src/three/Spacecraft.tsx` (viaje), `StoryCamera.tsx` (vistas `part` y `flight`).

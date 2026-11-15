@@ -185,6 +185,9 @@ export function playSfx(kind: SfxKind) {
     case 'powerdown':
       beep(440, 1.4, 0.12, 'sine', 28)
       break
+    case 'blink':
+      burst({ dur: 0.12, freq: 1400, gain: 0.12, type: 'bandpass', sweepTo: 600 })
+      break
     case 'relay':
       burst({ dur: 0.06, freq: 2500, gain: 0.7, type: 'bandpass' })
       beep(90, 0.08, 0.2, 'square')

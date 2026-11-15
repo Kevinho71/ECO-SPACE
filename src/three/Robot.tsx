@@ -37,6 +37,7 @@ export function Robot({ path, expression = null, clip, paused = false, followRun
   const { scene, animations } = useGLTF(path)
   const { actions, mixer } = useAnimations(animations, group)
   const current = useRef<THREE.AnimationAction | null>(null)
+  const driveAction = useRef<THREE.AnimationAction | null>(null)
 
   const status = useMemo(() => (scene.getObjectByName('status_light') as THREE.Mesh | undefined) ?? null, [scene])
 
@@ -94,6 +95,7 @@ export function Robot({ path, expression = null, clip, paused = false, followRun
     if (clip === null) {
       mixer.stopAllAction()
       current.current = null
+      driveAction.current = null
       return
     }
     const next = actions[clip]
@@ -104,6 +106,7 @@ export function Robot({ path, expression = null, clip, paused = false, followRun
     next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity)
     next.clampWhenFinished = once
     next.timeScale = SPEED[clip] ?? 1
+    driveAction.current = clip === 'Drive' ? next : null
     next.play()
     if (prev && prev !== next) prev.crossFadeTo(next, 0.35, false)
     else next.fadeIn(0.2)
@@ -121,7 +124,22 @@ export function Robot({ path, expression = null, clip, paused = false, followRun
 
   useFrame(({ clock }, dt) => {
     mixer.timeScale = paused ? 0 : 1
-    if (followRuntime && group.current) group.current.position.x = storyRuntime.robotX
+    if (followRuntime && group.current) {
+      // El robot no se desplaza: el suelo pasa por debajo. Sigue el relieve (cabeceo, alabeo), se hunde en la arena
+      // y tiembla cuando las ruedas patinan.
+      const g = group.current
+      const slip = storyRuntime.slip
+      const t = clock.elapsedTime
+      g.visible = storyRuntime.robotVisible
+      g.position.set(0, -storyRuntime.sink + Math.sin(t * 31) * 0.012 * slip, 0)
+      g.rotation.z = storyRuntime.pitch + Math.sin(t * 17) * 0.012 * slip
+      g.rotation.x = storyRuntime.roll + Math.sin(t * 23 + 1) * 0.02 * slip
+      // Las ruedas giran según la velocidad (o patinan).
+      if (driveAction.current) {
+        const sp = storyRuntime.speed
+        driveAction.current.timeScale = sp > 0.03 ? THREE.MathUtils.clamp(sp / 0.45, 0.35, 2.2) : slip > 0.1 ? 1.4 : 0.6
+      }
+    }
 
     // Luz de estado: late; se apaga con la batería y con el corte eléctrico.
     if (status) {

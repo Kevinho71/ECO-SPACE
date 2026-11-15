@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useAppStore } from '../store/useAppStore'
-import { sampleLinear, sampleStep, type Story } from '../data/story'
+import { sampleLinear, sampleStep, type PlaceId, type Story, type StoryChapter } from '../data/story'
 import { opportunityStory } from '../data/stories/opportunity'
 import { resetRuntime, storyRuntime } from './runtime'
 import { playSfx, setAudioPaused, setSoundEnabled, startAudio, stopAudio, updateAmbient } from './audio'
@@ -12,6 +12,30 @@ const STORIES: Record<string, Story> = {
 
 export function getStory(missionId: string | null): Story | null {
   return missionId ? STORIES[missionId] ?? null : null
+}
+
+/** Segundos entre que empiezan a cerrarse los párpados y el cambio de escenario (el punto más oscuro). */
+const BLINK_SWAP = 0.3
+
+/** Lugar en el instante t del capítulo (los parpadeos cambian el escenario con los ojos cerrados). */
+export function placeAt(ch: StoryChapter, t: number): PlaceId {
+  let p = ch.place0
+  for (const j of ch.jumps ?? []) if (t >= j.t + BLINK_SWAP) p = j.to
+  return p
+}
+
+/** Cuánto están cerrados los párpados (0–1) en el instante t. */
+function blinkAt(ch: StoryChapter, t: number): number {
+  let b = 0
+  for (const j of ch.jumps ?? []) {
+    const u = t - j.t
+    let v = 0
+    if (u > 0 && u < 0.25) v = u / 0.25
+    else if (u >= 0.25 && u < 0.35) v = 1
+    else if (u >= 0.35 && u < 0.8) v = 1 - (u - 0.35) / 0.45
+    b = Math.max(b, v * v * (3 - 2 * v))
+  }
+  return b
 }
 
 // Acciones del reproductor (usadas por la interfaz).
@@ -75,6 +99,8 @@ export function StoryDirector() {
       storyClip: null,
       storyExpression: null,
       storyView: 'pov',
+      storyPlace: st.chapters[0].place0,
+      storyPart: null,
       storyScene: 'surface',
       cameraMode: 'guided',
     })
@@ -84,6 +110,7 @@ export function StoryDirector() {
     let chapter = 0
     let t = 0
     let firedSfx = new Set<number>()
+    let firedBlink = new Set<number>()
     let lastKey = ''
 
     jumpTo = (ci, to = 0) => {
@@ -97,6 +124,7 @@ export function StoryDirector() {
       chapter = Math.max(0, ci)
       t = to
       firedSfx = new Set()
+      firedBlink = new Set()
       lastKey = ''
       storyRuntime.chapter = chapter
       useAppStore.getState().patchStory({
@@ -134,6 +162,13 @@ export function StoryDirector() {
       storyRuntime.powerOff = sampleLinear(ch.powerOff, t, 0)
       storyRuntime.shake = sampleLinear(ch.shake, t, 0) * (s.reduceEffects ? 0 : 1)
       storyRuntime.robotX = sampleLinear(ch.robotX, t, 0)
+      storyRuntime.speed = Math.max(0, (sampleLinear(ch.robotX, t + 0.1, 0) - sampleLinear(ch.robotX, t - 0.1, 0)) / 0.2)
+      if (!s.isPlaying || !s.storyStarted) storyRuntime.speed = 0
+      storyRuntime.pan = sampleLinear(ch.pan, t, 0)
+      storyRuntime.sink = sampleLinear(ch.sink, t, 0)
+      storyRuntime.slip = sampleLinear(ch.slip, t, 0) * (s.isPlaying ? 1 : 0)
+      storyRuntime.blink = blinkAt(ch, t)
+      storyRuntime.robotVisible = sampleStep(ch.robot, t, true)
       storyRuntime.battery = sampleLinear(ch.battery, t, 1)
       storyRuntime.signal = sampleLinear(ch.signal, t, 1)
 
@@ -145,7 +180,9 @@ export function StoryDirector() {
       let cue = -1
       for (let i = 0; i < ch.cues.length; i++) if (ch.cues[i].t <= t) cue = i
       const card = (ch.cards ?? []).find((c) => t >= c.at && t < c.at + c.dur) ?? null
-      const key = `${scene}|${view}|${clip}|${expr}|${cue}|${card ? card.at : ''}`
+      const place = placeAt(ch, t)
+      const part = view === 'part' ? sampleStep(ch.partFocus, t, null)?.hotspot ?? null : null
+      const key = `${scene}|${view}|${clip}|${expr}|${cue}|${card ? card.at : ''}|${place}|${part}`
       if (key !== lastKey) {
         lastKey = key
         s.patchStory({
@@ -155,11 +192,19 @@ export function StoryDirector() {
           storyExpression: expr,
           cueIndex: cue,
           activeCard: card,
+          storyPlace: place,
+          storyPart: part,
         })
       }
 
       // Efectos de sonido puntuales
       if (s.storyStarted && s.isPlaying) {
+        ;(ch.jumps ?? []).forEach((j, i) => {
+          if (j.t <= t && !firedBlink.has(i)) {
+            firedBlink.add(i)
+            if (t - j.t < 0.5) playSfx('blink')
+          }
+        })
         ;(ch.sfx ?? []).forEach((e, i) => {
           if (e.t <= t && !firedSfx.has(i) && t - e.t < 1.5) {
             firedSfx.add(i)

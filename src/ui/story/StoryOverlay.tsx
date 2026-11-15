@@ -104,6 +104,24 @@ function Subtitles({ story }: { story: Story }) {
   )
 }
 
+/** Rótulo de la pieza que la cámara está enseñando (capítulo 1). */
+function PartCallout({ missionId }: { missionId: string }) {
+  const id = useAppStore((s) => s.storyPart)
+  const view = useAppStore((s) => s.storyView)
+  const h = view === 'part' ? HOTSPOTS[missionId]?.find((x) => x.id === id) : null
+  if (!h) return null
+  return (
+    <div className="pointer-events-none absolute right-5 top-1/2 z-[14] w-72 -translate-y-1/2">
+      <div key={h.id} className={`subtitle-in ${GLASS} rounded-xl border-l-2 border-l-cyan-300 p-4`}>
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-200">Mis piezas</p>
+        <h3 className="mt-1 text-base font-semibold text-white">{h.title}</h3>
+        <p className="mt-1 font-mono text-xs uppercase tracking-widest text-cyan-100/80">{h.fact}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-200">{h.explain}</p>
+      </div>
+    </div>
+  )
+}
+
 function Card() {
   const card = useAppStore((s) => s.activeCard)
   if (!card) return null
@@ -271,6 +289,7 @@ export function StoryOverlay({ missionId }: { missionId: string }) {
           <ChapterBanner story={story} />
           <Subtitles story={story} />
           <Card />
+          <PartCallout missionId={missionId} />
           <ExploreHint />
           <Inspector missionId={missionId} />
           <Timeline story={story} />

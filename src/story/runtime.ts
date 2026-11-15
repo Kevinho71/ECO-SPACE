@@ -17,6 +17,19 @@ export const storyRuntime = {
   /** Giro de la mirada del usuario respecto a la cámara de la historia (radianes). */
   lookYaw: 0,
   lookPitch: 0,
+  /** Giro automático de la mirada (panorámica). */
+  pan: 0,
+  /** Párpado: 0 abierto, 1 cerrado. */
+  blink: 0,
+  /** Velocidad visual (m/s), hundimiento (m) y patinaje (0–1). */
+  speed: 0,
+  sink: 0,
+  slip: 0,
+  robotVisible: true,
+  /** Relieve bajo el robot (calculado por el escenario). */
+  groundY: 0,
+  pitch: 0,
+  roll: 0,
 }
 
 export function resetRuntime() {
@@ -33,5 +46,14 @@ export function resetRuntime() {
     signal: 1,
     lookYaw: 0,
     lookPitch: 0,
+    pan: 0,
+    blink: 0,
+    speed: 0,
+    sink: 0,
+    slip: 0,
+    robotVisible: true,
+    groundY: 0,
+    pitch: 0,
+    roll: 0,
   })
 }

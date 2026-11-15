@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Expression, StoryCard } from '../data/story'
+import type { Expression, PlaceId, StoryCard, StoryView } from '../data/story'
 
 export type ViewStage = 'splash' | 'solar-map' | 'planet-map' | 'mission-scene'
 export type LocationId = 'moon' | 'mars' | 'beyond'
@@ -26,7 +26,10 @@ interface AppState {
   // Historia (piloto Opportunity). Los valores continuos viven en `storyRuntime` (src/story/runtime.ts).
   storyStarted: boolean
   storyEnded: boolean
-  storyView: 'pov' | 'wide'
+  storyView: StoryView
+  storyPlace: PlaceId
+  /** Id del hotspot de la pieza que se está enseñando (cámara 'part'). */
+  storyPart: string | null
   storyScene: 'surface' | 'flight'
   storyClip: string | null
   storyExpression: Expression
@@ -74,6 +77,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   storyStarted: false,
   storyEnded: false,
   storyView: 'pov',
+  storyPlace: 'generic',
+  storyPart: null,
   storyScene: 'surface',
   storyClip: null,
   storyExpression: null,

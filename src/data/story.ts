@@ -4,6 +4,36 @@
 
 export type Expression = 'Sad' | 'Surprised' | 'Sleep' | null
 
+/** Lugares (escenarios) por los que pasa la historia. 'launch'/'cruise'/'entry' son escenas del viaje en el espacio. */
+export type PlaceId =
+  | 'generic'
+  | 'launch'
+  | 'cruise'
+  | 'entry'
+  | 'eagle'
+  | 'plains'
+  | 'purgatory'
+  | 'endurance'
+  | 'victoria'
+  | 'endeavour'
+  | 'perseverance'
+
+/** pov = ojo del robot · wide = vista exterior orbitando · part = primer plano de una pieza · flight = cámara cinematográfica del viaje */
+export type StoryView = 'pov' | 'wide' | 'part' | 'flight'
+
+/** Pieza del robot que se enseña con la cámara 'part'. */
+export interface PartFocus {
+  /** Nodo del GLB que se enfoca. */
+  node: string
+  /** Id de HOTSPOTS (rótulo con título y dato). */
+  hotspot: string
+  dist: number
+  /** Ángulo horizontal (rad) medido desde +X (frente del robot) hacia +Z (derecha). */
+  az: number
+  /** Elevación (rad). */
+  el: number
+}
+
 /** Valor que cambia a lo largo del capítulo (interpolación lineal o escalonada según el campo). */
 export interface Keyframe<T> {
   t: number
@@ -39,6 +69,7 @@ export type SfxKind =
   | 'unfold'
   | 'powerdown'
   | 'relay'
+  | 'blink'
 
 export interface StoryCard {
   at: number
@@ -61,8 +92,21 @@ export interface StoryChapter {
   subtitle: string
   duration: number
   cues: Cue[]
-  /** Cámara: 'pov' (ojo del robot) o 'wide' (vista exterior). */
-  camera: Keyframe<'pov' | 'wide'>[]
+  /** Cámara de la historia (ver StoryView). */
+  camera: Keyframe<StoryView>[]
+  /** Lugar con el que empieza el capítulo. */
+  place0: PlaceId
+  /** "Parpadeos": a los `t` s los párpados se cierran y, en lo más oscuro (t+0,3 s), el escenario pasa a `to`. */
+  jumps?: { t: number; to: PlaceId }[]
+  /** Pieza enfocada (solo con la cámara 'part'). */
+  partFocus?: Keyframe<PartFocus | null>[]
+  /** Giro automático de la mirada (rad), para panorámicas. */
+  pan?: Keyframe<number>[]
+  /** Hundimiento de las ruedas en la arena (m) y patinaje (0–1). */
+  sink?: Keyframe<number>[]
+  slip?: Keyframe<number>[]
+  /** ¿Se ve el robot? (durante el viaje va plegado dentro de la nave). Por defecto sí. */
+  robot?: Keyframe<boolean>[]
   /** 'surface' = escena de Marte; 'flight' = registro de vuelo (solo telemetría). */
   scene: Keyframe<'surface' | 'flight'>[]
   /** Estática / glitch del feed de cámara, 0–1 (interpolada). */
@@ -73,7 +117,7 @@ export interface StoryChapter {
   powerOff?: Keyframe<number>[]
   /** Vibración de pantalla durante el aterrizaje, 0–1 (interpolada). */
   shake?: Keyframe<number>[]
-  /** Posición del robot a lo largo de +X (m), para escenas de avance (interpolada). */
+  /** Distancia recorrida por el robot en el lugar actual (m). El mundo se desplaza bajo él (interpolada). */
   robotX?: Keyframe<number>[]
   battery: Keyframe<number>[]
   signal: Keyframe<number>[]
