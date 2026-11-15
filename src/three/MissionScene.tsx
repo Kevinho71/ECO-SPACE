@@ -19,7 +19,9 @@ export function MissionScene() {
 
   return (
     <>
-      <Stars radius={120} depth={60} count={3000} factor={4} saturation={0} fade speed={0.4} />
+      {mission.location !== 'mars' && (
+        <Stars radius={120} depth={60} count={3000} factor={4} saturation={0} fade speed={0.4} />
+      )}
 
       {mission.location === 'moon' && <LunarScene />}
       {mission.location === 'mars' && <MarsScene />}

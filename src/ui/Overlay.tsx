@@ -11,6 +11,8 @@ export function Overlay() {
   const stage = useAppStore((s) => s.stage)
   const selectedLocation = useAppStore((s) => s.selectedLocation)
   const selectedMissionId = useAppStore((s) => s.selectedMissionId)
+  const transitionTo = useAppStore((s) => s.transitionTo)
+  const backToPlanet = useAppStore((s) => s.backToPlanet)
   const setStage = useAppStore((s) => s.setStage)
   const cameraMode = useAppStore((s) => s.cameraMode)
   const setCameraMode = useAppStore((s) => s.setCameraMode)
@@ -30,7 +32,7 @@ export function Overlay() {
             </p>
           </div>
           <button
-            onClick={() => setStage('solar-map')}
+            onClick={() => transitionTo(() => setStage('solar-map'))}
             className="pointer-events-auto rounded-full border border-white/20 px-6 py-2 text-sm text-slate-300 transition hover:bg-white/10"
           >
             Volver al mapa
@@ -42,7 +44,7 @@ export function Overlay() {
         <>
           <div className="flex items-center justify-between px-6 py-4">
             <button
-              onClick={() => setStage('planet-map')}
+              onClick={backToPlanet}
               className="pointer-events-auto rounded-full border border-white/20 px-4 py-2 text-sm text-slate-300 transition hover:bg-white/10"
             >
               Volver

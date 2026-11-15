@@ -6,6 +6,7 @@ import { useAppStore, type LocationId } from '../store/useAppStore'
 import { SceneCamera } from './SceneCamera'
 import { FlyTo } from './FlyTo'
 import { getSolarTextures } from './lib/solarTextures'
+import { SunBody } from './Sun'
 
 // ---------------------------------------------------------------------------
 // Sistema solar realista y rotable. Los destinos con robot (Luna, Marte y la
@@ -14,21 +15,6 @@ import { getSolarTextures } from './lib/solarTextures'
 // ---------------------------------------------------------------------------
 
 const LABEL_STYLE: React.CSSProperties = { textShadow: '0 1px 5px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)' }
-
-function Sun() {
-  return (
-    <group>
-      <mesh>
-        <sphereGeometry args={[1.4, 64, 64]} />
-        <meshBasicMaterial color="#fff2c8" />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[1.75, 32, 32]} />
-        <meshBasicMaterial color="#ffd98a" transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
-    </group>
-  )
-}
 
 function Orbiter({
   radius,
@@ -232,6 +218,7 @@ function BeyondBeacon({ onSelect }: { onSelect: (id: LocationId) => void }) {
 
 export function SolarMap() {
   const selectLocation = useAppStore((s) => s.selectLocation)
+  const transitionTo = useAppStore((s) => s.transitionTo)
   const tex = getSolarTextures()
 
   const moonRef = useRef<THREE.Group>(null)
@@ -259,7 +246,7 @@ export function SolarMap() {
 
       <SceneCamera position={[0, 12, 26]} target={[0, 0, 0]} />
 
-      <Sun />
+      <SunBody radius={1.4} />
 
       <Orbiter radius={2.2} speed={0.35}>
         <OrbitRing radius={2.2} />
@@ -311,10 +298,8 @@ export function SolarMap() {
         <FlyTo
           target={fly.target}
           approachDistance={fly.distance}
-          onArrive={() => {
-            selectLocation(fly.id)
-            setFly(null)
-          }}
+          onNearEnd={() => transitionTo(() => selectLocation(fly.id))}
+          onArrive={() => setFly(null)}
         />
       )}
 

@@ -173,3 +173,36 @@ Si el GLB sale demasiado pesado, revisa el tamaño de las texturas (estos modelo
 1. Ejecuta `build_all.py` y verifica que aparecen los 7 `.glb`.
 2. Ábrelos en el visor de glTF (https://gltf-viewer.donmccurdy.com/) para comprobar la geometría, los **nodos con nombre** y los **morph targets**.
 3. En el front, carga `useGLTF("/models/mars/opportunity.glb")` y busca los nodos por nombre para la articulación y el POV.
+
+---
+
+## 10. Estilo "Robot Expressive" y novedades (v2)
+
+Los 7 robots se rehicieron en el estilo de `webgl_animation_skinning_morph` (low-poly redondeado, colores planos, cara expresiva), manteniendo la silueta y la paleta reales de la NASA (referencias en `../referencias_nasa/`).
+
+**Nuevo en `robot_helpers.py`:** `add_rbox` (caja con bevel suave), `add_dish` (antena parabólica), `add_face` (ojos con morph targets), `add_clip` (animaciones) y `loop`. **`style.py`** define la paleta compartida (`palette()`, `glow()`).
+
+| Nombre en el GLB | Qué es |
+|------------------|--------|
+| `face` | Malla de ojos con morph targets `Sad`, `Surprised`, `Sleep` (ojos cerrados = corte eléctrico; el front también parpadea con él) |
+| `antenna_droop`, `rotor_damage` | Morph targets de las antenas / aspa dañada de Ingenuity |
+| Clips | `Idle`, `Wake`, `Death` en todos; además `Drive` (Opportunity, Pathfinder), `Dig` (Surveyor 3, InSight), `Land` (Eagle), `Open` (Pathfinder), `Fly` (Ingenuity), `Spin` (Pioneer 10) |
+
+Scripts nuevos:
+- `render_previews.py` → PNG rápidos sin GPU: `blender --background --python render_previews.py -- opportunity` (o `all`). Opcional `FOCUS=<nodo> FOCUS_SIZE=0.9` para primer plano. Salen en `_previews/` (ignorada por git).
+- `prep_textures.py` → reduce las texturas NASA de `referencias_nasa/texturas` a `public/textures/` (la Luna usa el mapa equirectangular LRO, NASA SVS 4720).
+
+**Trampas conocidas de los clips (Blender 5 → glTF):**
+- El exportador hornea la pose del primer fotograma de un clip como pose de reposo si ese nodo solo aparece en un clip. Haz que el primer keyframe de cada clip sea la pose de reposo, y evita animar `scale` en `Wake`.
+- Los clips van en pistas NLA (`export_animation_mode="NLA_TRACKS"`); `export_glb` exporta desde un frame neutro.
+- `create_cube(size=1)` ya mide 1: las dimensiones de `add_box`/`add_rbox` son las reales (en v1 salían a la mitad).
+
+**Front:** `Robot.tsx` reproduce `Wake` y luego `Idle` (prop `clip`), parpadea y acepta `expression="Sad" | "Surprised" | "Sleep"`.
+
+---
+
+## 11. Sol y transiciones (front)
+
+- **Sol:** `src/three/Sun.tsx` (`SunBody`) usa `public/textures/sun.jpg`, compuesta por `prep_sun.py` con imágenes reales del Solar Dynamics Observatory (NASA/SDO, dominio público): luz visible HMI (manchas solares) + estructura magnética AIA 193. Es un disco que siempre mira a la cámara (en una esfera luminosa se ve igual desde cualquier ángulo) con una corona que nace en el limbo. Se usa en el mapa solar y como sol de fondo en los escenarios. Para renovar la textura con una imagen más reciente, vuelve a descargar `latest_2048_HMIIC.jpg` y `latest_2048_0193.jpg` de `sdo.gsfc.nasa.gov/assets/img/latest/` a `referencias_nasa/texturas/` (como `sun_sdo_HMIIC.jpg` y `sun_sdo_0193.jpg`) y ejecuta `prep_sun.py`.
+- **Transiciones:** `useAppStore.transitionTo(fn)` funde a negro (velo en `App.tsx`), ejecuta el cambio de escena y vuelve a mostrar. `FlyTo` avisa con `onNearEnd` al ~70 % del vuelo para que el corte quede oculto. Al entrar a un planeta (`arrival: 'enter'`) la cámara arranca con el mismo encuadre con el que terminó el zoom y sigue acercándose; al volver de ver un robot (`backToPlanet`, `arrival: 'return'`) arranca pegada a su baliza y se aleja suavemente.
+- **Causa del corte brusco original:** `CameraDolly` recibía arrays nuevos en cada render y su efecto devolvía la cámara al punto de partida cuando terminaba la animación.

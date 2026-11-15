@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html, OrbitControls, Sparkles, Stars, useCursor } from '@react-three/drei'
 import * as THREE from 'three'
@@ -21,39 +21,43 @@ function latLonToPosition(lat: number, lon: number, radius: number): [number, nu
   ]
 }
 
-/** Animación de acercamiento (dolly) al cargar la escena. */
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+
+/**
+ * Movimiento de cámara al entrar a la escena (dolly suave, sin saltos).
+ * `from`/`to` se calculan UNA sola vez: si cambiaran en cada render, el efecto de montaje
+ * devolvería la cámara al punto de partida y se vería un corte brusco al terminar.
+ */
 function CameraDolly({
   from,
   to,
   target,
-  duration = 1.8,
+  duration = 2.4,
   onDone,
 }: {
-  from: [number, number, number]
-  to: [number, number, number]
-  target: [number, number, number]
+  from: THREE.Vector3
+  to: THREE.Vector3
+  target: THREE.Vector3
   duration?: number
   onDone: () => void
 }) {
   const camera = useThree((s) => s.camera)
   const startRef = useRef<number | null>(null)
   const doneRef = useRef(false)
-  const fromV = useMemo(() => new THREE.Vector3(...from), [from])
-  const toV = useMemo(() => new THREE.Vector3(...to), [to])
-  const targetV = useMemo(() => new THREE.Vector3(...target), [target])
 
-  useEffect(() => {
-    camera.position.copy(fromV)
-    camera.lookAt(targetV)
-  }, [camera, fromV, targetV])
+  // Coloca la cámara ANTES del primer fotograma (solo al montar).
+  useLayoutEffect(() => {
+    camera.position.copy(from)
+    camera.lookAt(target)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useFrame(({ clock }) => {
     if (doneRef.current) return
     if (startRef.current === null) startRef.current = clock.elapsedTime
     const t = Math.min(1, (clock.elapsedTime - startRef.current) / duration)
-    const e = 1 - Math.pow(1 - t, 3)
-    camera.position.lerpVectors(fromV, toV, e)
-    camera.lookAt(targetV)
+    camera.position.lerpVectors(from, to, easeInOutCubic(t))
+    camera.lookAt(target)
     if (t >= 1) {
       doneRef.current = true
       onDone()
@@ -61,6 +65,31 @@ function CameraDolly({
   })
 
   return null
+}
+
+/**
+ * Puntos de partida/llegada del dolly según cómo se llegó:
+ *  - 'enter' (desde el sistema solar): empieza con el mismo encuadre con el que terminó el zoom
+ *    (planeta ≈ 5 radios de distancia) y se aleja hasta la vista general.
+ *  - 'return' (de ver un robot): empieza pegado a su baliza y se aleja hasta verla desde lejos.
+ */
+function useDollyPlan(missionId: string | null, radius: number) {
+  const arrival = useAppStore.getState().arrival
+  return useMemo(() => {
+    const overview = new THREE.Vector3(0, 1.5, 9)
+    const target = new THREE.Vector3(0, 0, 0)
+    const m = MISSIONS.find((x) => x.id === missionId)
+    if (arrival === 'return' && m?.latlon) {
+      const b = new THREE.Vector3(...latLonToPosition(m.latlon[0], m.latlon[1], radius * 1.015))
+      const u = b.clone().normalize()
+      return { from: b.clone().addScaledVector(u, 1.6), to: u.clone().multiplyScalar(9.5), target }
+    }
+    if (arrival === 'return' && m?.location === 'beyond') {
+      return { from: new THREE.Vector3(0, 0.4, 1.6), to: new THREE.Vector3(0, 0, 8), target }
+    }
+    return { from: overview.clone().setLength(radius * 5.3), to: overview, target }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 }
 
 function Beacon({
@@ -112,6 +141,9 @@ function Beacon({
 /** Globo rotable de la Luna o Marte, con balizas en las coordenadas reales de las misiones. */
 function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
   const selectMission = useAppStore((s) => s.selectMission)
+  const transitionTo = useAppStore((s) => s.transitionTo)
+  const lastMissionId = useAppStore((s) => s.selectedMissionId)
+  const plan = useDollyPlan(lastMissionId, PLANET_RADIUS)
   const tex = getSolarTextures()
   const isMoon = location === 'moon'
   const map = isMoon ? tex.moon : tex.mars
@@ -126,7 +158,7 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
       <ambientLight intensity={isMoon ? 0.25 : 0.45} />
       <directionalLight position={[10, 6, 8]} intensity={isMoon ? 2.5 : 2} color={isMoon ? '#fff3e0' : '#ffd9b0'} />
 
-      <CameraDolly from={[0, 10, 22]} to={[0, 1.5, 9]} target={[0, 0, 0]} onDone={() => setReady(true)} />
+      <CameraDolly from={plan.from} to={plan.to} target={plan.target} onDone={() => setReady(true)} />
 
       <mesh>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
@@ -135,8 +167,8 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
 
       {!isMoon && (
         <mesh>
-          <sphereGeometry args={[PLANET_RADIUS * 1.05, 32, 32]} />
-          <meshBasicMaterial color="#ff8a4a" transparent opacity={0.08} blending={THREE.AdditiveBlending} depthWrite={false} />
+          <sphereGeometry args={[PLANET_RADIUS * 1.04, 32, 32]} />
+          <meshBasicMaterial color="#ff9a60" transparent opacity={0.1} side={THREE.BackSide} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
       )}
 
@@ -156,10 +188,8 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
         <FlyTo
           target={fly.target}
           approachDistance={1.6}
-          onArrive={() => {
-            selectMission(fly.missionId)
-            setFly(null)
-          }}
+          onNearEnd={() => transitionTo(() => selectMission(fly.missionId))}
+          onArrive={() => setFly(null)}
         />
       )}
 
@@ -180,6 +210,9 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
 /** Espacio profundo: baliza única para Pioneer 10. */
 function BeyondMap() {
   const selectMission = useAppStore((s) => s.selectMission)
+  const transitionTo = useAppStore((s) => s.transitionTo)
+  const lastMissionId = useAppStore((s) => s.selectedMissionId)
+  const plan = useDollyPlan(lastMissionId, 1)
   const [ready, setReady] = useState(false)
   const [fly, setFly] = useState<{ target: THREE.Vector3; missionId: string } | null>(null)
 
@@ -191,7 +224,7 @@ function BeyondMap() {
       <ambientLight intensity={0.12} />
       <directionalLight position={[10, 6, 8]} intensity={1.5} />
 
-      <CameraDolly from={[0, 6, 20]} to={[0, 0, 8]} target={[0, 0, 0]} onDone={() => setReady(true)} />
+      <CameraDolly from={plan.from} to={plan.to} target={plan.target} onDone={() => setReady(true)} />
 
       <Beacon
         position={[0, 0, 0]}
@@ -204,10 +237,8 @@ function BeyondMap() {
         <FlyTo
           target={fly.target}
           approachDistance={1.6}
-          onArrive={() => {
-            selectMission(fly.missionId)
-            setFly(null)
-          }}
+          onNearEnd={() => transitionTo(() => selectMission(fly.missionId))}
+          onArrive={() => setFly(null)}
         />
       )}
 

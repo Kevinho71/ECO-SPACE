@@ -14,17 +14,18 @@ interface TerrainProps extends TerrainOpts {
 /** Terreno procedural desplazado por ruido fractal, con color por altura. */
 export function Terrain({
   size = 150,
-  segments = 150,
+  segments = 100,
   height = 1.6,
   seed = 1,
   flattenStart = 3,
   flattenEnd = 8,
+  craters = 0,
   lowColor,
   midColor,
   highColor,
 }: TerrainProps) {
   const geometry = useMemo(() => {
-    const opts = { seed, height, flattenStart, flattenEnd }
+    const opts = { seed, height, flattenStart, flattenEnd, craters }
     const geo = new THREE.PlaneGeometry(size, size, segments, segments)
     const pos = geo.attributes.position as THREE.BufferAttribute
     const colors = new Float32Array(pos.count * 3)
@@ -51,11 +52,11 @@ export function Terrain({
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
     geo.computeVertexNormals()
     return geo
-  }, [size, segments, height, seed, flattenStart, flattenEnd, lowColor, midColor, highColor])
+  }, [size, segments, height, seed, flattenStart, flattenEnd, craters, lowColor, midColor, highColor])
 
   return (
     <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-      <meshStandardMaterial vertexColors roughness={0.96} metalness={0.04} />
+      <meshStandardMaterial vertexColors flatShading roughness={1} metalness={0} />
     </mesh>
   )
 }
@@ -74,12 +75,13 @@ export function Rocks({
   height = 1.6,
   flattenStart = 3,
   flattenEnd = 8,
+  craters = 0,
   color = '#77777c',
   minScale = 0.15,
   maxScale = 1.1,
 }: RocksProps) {
   const rocks = useMemo(() => {
-    const opts = { seed, height, flattenStart, flattenEnd }
+    const opts = { seed, height, flattenStart, flattenEnd, craters }
     const arr: {
       position: [number, number, number]
       scale: number
@@ -104,7 +106,7 @@ export function Rocks({
       })
     }
     return arr
-  }, [count, seed, height, flattenStart, flattenEnd, minScale, maxScale])
+  }, [count, seed, height, flattenStart, flattenEnd, craters, minScale, maxScale])
 
   return (
     <>

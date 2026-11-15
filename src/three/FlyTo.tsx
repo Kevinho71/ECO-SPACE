@@ -16,17 +16,21 @@ export function FlyTo({
   target,
   approachDistance = 1.2,
   duration = 1.6,
+  onNearEnd,
   onArrive,
 }: {
   target: THREE.Vector3
   approachDistance?: number
   duration?: number
-  onArrive: () => void
+  /** Se llama una vez al ~70 % del vuelo: ideal para empezar el fundido y que el corte quede oculto. */
+  onNearEnd?: () => void
+  onArrive?: () => void
 }) {
   const camera = useThree((s) => s.camera)
   const controls = useThree((s) => s.controls) as unknown as ControlsLike | null
   const state = useRef<{ start: number; cam: THREE.Vector3; tgt: THREE.Vector3; dir: THREE.Vector3 } | null>(null)
   const done = useRef(false)
+  const nearFired = useRef(false)
   const dest = useMemo(() => new THREE.Vector3(), [])
 
   useEffect(() => {
@@ -61,9 +65,13 @@ export function FlyTo({
       controls.update()
     }
 
+    if (t >= 0.7 && !nearFired.current) {
+      nearFired.current = true
+      onNearEnd?.()
+    }
     if (t >= 1) {
       done.current = true
-      onArrive()
+      onArrive?.()
     }
   })
 
