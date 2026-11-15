@@ -15,6 +15,8 @@ interface RobotProps {
    * Si es `null`, queda quieto en su pose de reposo.
    */
   clip?: string | null
+  /** Clip que se queda congelado en su última pose (mezclado con `clip`). */
+  hold?: string | null
   /** Pausa las animaciones (pausa de la historia). */
   paused?: boolean
   /** Si es true, la posición X del robot sigue a `storyRuntime.robotX`. */
@@ -24,7 +26,7 @@ interface RobotProps {
 /** Clips que se reproducen una vez y se quedan en su última pose. */
 const ONCE = new Set(['Wake', 'Death', 'Open', 'Land'])
 /** Velocidad de reproducción por clip (la muerte va en cámara lenta). */
-const SPEED: Record<string, number> = { Death: 0.4 }
+const SPEED: Record<string, number> = { Death: 0.4, 'Drive!': 0.4 }
 
 /**
  * Carga el GLB de una misión (estilo "Robot Expressive") y le da vida:
@@ -32,7 +34,7 @@ const SPEED: Record<string, number> = { Death: 0.4 }
  *  - parpadeo aleatorio y expresiones con los morph targets de `face`,
  *  - pulso de la luz de estado (`status_light`, material emisivo).
  */
-export function Robot({ path, expression = null, clip, paused = false, followRuntime = false }: RobotProps) {
+export function Robot({ path, expression = null, clip, hold = null, paused = false, followRuntime = false }: RobotProps) {
   const group = useRef<THREE.Group>(null)
   const { scene, animations } = useGLTF(path)
   const { actions, mixer } = useAnimations(animations, group)
@@ -50,6 +52,31 @@ export function Robot({ path, expression = null, clip, paused = false, followRun
     })
     return found as THREE.Mesh | null
   }, [scene])
+
+  // Palas dañadas (solo Ingenuity): malla con el morph `rotor_damage`.
+  const damaged = useMemo(() => {
+    let found: THREE.Mesh | null = null
+    scene.traverse((o) => {
+      const m = o as THREE.Mesh
+      if (m.isMesh && m.morphTargetDictionary && 'rotor_damage' in m.morphTargetDictionary) found = m
+    })
+    return found as THREE.Mesh | null
+  }, [scene])
+
+  // Paneles solares (InSight): se cubren de polvo con `storyRuntime.damage`.
+  const panels = useMemo(() => {
+    const out: { mat: THREE.MeshStandardMaterial; base: THREE.Color }[] = []
+    scene.traverse((o) => {
+      const m = o as THREE.Mesh
+      if (m.isMesh && /^panel_[LR]_mesh$/.test(m.name)) {
+        m.material = (m.material as THREE.MeshStandardMaterial).clone()
+        const mat = m.material as THREE.MeshStandardMaterial
+        out.push({ mat, base: mat.color.clone() })
+      }
+    })
+    return out
+  }, [scene])
+  const dustColor = useMemo(() => new THREE.Color('#e3a566'), [])
 
   // Sombras en todas las mallas.
   useMemo(() => {
@@ -98,10 +125,12 @@ export function Robot({ path, expression = null, clip, paused = false, followRun
       driveAction.current = null
       return
     }
-    const next = actions[clip]
+    // Un nombre terminado en «!» se reproduce una sola vez y se queda en su última pose (p. ej. «Drive!»).
+    const name = clip.replace(/!$/, '')
+    const next = actions[name]
     if (!next) return
     const prev = current.current
-    const once = ONCE.has(clip)
+    const once = ONCE.has(clip) || clip.endsWith('!')
     next.reset()
     next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity)
     next.clampWhenFinished = once
@@ -112,6 +141,20 @@ export function Robot({ path, expression = null, clip, paused = false, followRun
     else next.fadeIn(0.2)
     current.current = next
   }, [clip, actions, mixer])
+
+  // Clip congelado en su última pose (tras el clip actual, para que no lo reinicie).
+  useEffect(() => {
+    const a = hold ? actions[hold] : null
+    if (!a) return
+    a.reset().setLoop(THREE.LoopOnce, 1)
+    a.clampWhenFinished = true
+    a.play()
+    a.time = a.getClip().duration
+    a.paused = true
+    return () => {
+      a.stop()
+    }
+  }, [hold, clip, actions])
 
   useEffect(
     () => () => {
@@ -131,14 +174,24 @@ export function Robot({ path, expression = null, clip, paused = false, followRun
       const slip = storyRuntime.slip
       const t = clock.elapsedTime
       g.visible = storyRuntime.robotVisible
-      g.position.set(0, -storyRuntime.sink + Math.sin(t * 31) * 0.012 * slip, 0)
-      g.rotation.z = storyRuntime.pitch + Math.sin(t * 17) * 0.012 * slip
+      g.position.set(0, storyRuntime.alt - storyRuntime.sink + Math.sin(t * 31) * 0.012 * slip, 0)
+      g.rotation.z = storyRuntime.pitch - storyRuntime.tilt + Math.sin(t * 17) * 0.012 * slip
       g.rotation.x = storyRuntime.roll + Math.sin(t * 23 + 1) * 0.02 * slip
       // Las ruedas giran según la velocidad (o patinan).
       if (driveAction.current) {
         const sp = storyRuntime.speed
         driveAction.current.timeScale = sp > 0.03 ? THREE.MathUtils.clamp(sp / 0.45, 0.35, 2.2) : slip > 0.1 ? 1.4 : 0.6
       }
+    }
+
+    if (panels.length) {
+      const dm = followRuntime ? storyRuntime.damage : 0
+      panels.forEach((p) => p.mat.color.copy(p.base).lerp(dustColor, dm * 0.95))
+    }
+    if (damaged) {
+      const dm = followRuntime ? storyRuntime.damage : 0
+      damaged.visible = dm > 0.01
+      if (damaged.morphTargetInfluences) damaged.morphTargetInfluences[damaged.morphTargetDictionary!['rotor_damage']] = dm
     }
 
     // Luz de estado: late; se apaga con la batería y con el corte eléctrico.

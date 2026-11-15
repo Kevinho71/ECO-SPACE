@@ -2,12 +2,18 @@ import { useEffect } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { sampleLinear, sampleStep, type PlaceId, type Story, type StoryChapter } from '../data/story'
 import { opportunityStory } from '../data/stories/opportunity'
+import { ingenuityStory } from '../data/stories/ingenuity'
+import { insightStory } from '../data/stories/insight'
+import { pathfinderStory } from '../data/stories/pathfinder'
 import { resetRuntime, storyRuntime } from './runtime'
 import { playSfx, setAudioPaused, setSoundEnabled, startAudio, stopAudio, updateAmbient } from './audio'
 
 /** Historias disponibles por misión. Las demás misiones todavía no tienen guion. */
 const STORIES: Record<string, Story> = {
   opportunity: opportunityStory,
+  ingenuity: ingenuityStory,
+  insight: insightStory,
+  pathfinder: pathfinderStory,
 }
 
 export function getStory(missionId: string | null): Story | null {
@@ -169,6 +175,11 @@ export function StoryDirector() {
       storyRuntime.slip = sampleLinear(ch.slip, t, 0) * (s.isPlaying ? 1 : 0)
       storyRuntime.blink = blinkAt(ch, t)
       storyRuntime.robotVisible = sampleStep(ch.robot, t, true)
+      storyRuntime.alt = sampleLinear(ch.alt, t, 0)
+      storyRuntime.tilt = sampleLinear(ch.tilt, t, 0) * (s.reduceEffects ? 0.5 : 1)
+      storyRuntime.gaze = sampleLinear(ch.gaze, t, 0)
+      storyRuntime.damage = sampleLinear(ch.damage, t, 0)
+      storyRuntime.roverX = sampleLinear(ch.rover, t, 999)
       storyRuntime.battery = sampleLinear(ch.battery, t, 1)
       storyRuntime.signal = sampleLinear(ch.signal, t, 1)
 
@@ -182,13 +193,16 @@ export function StoryDirector() {
       const card = (ch.cards ?? []).find((c) => t >= c.at && t < c.at + c.dur) ?? null
       const place = placeAt(ch, t)
       const part = view === 'part' ? sampleStep(ch.partFocus, t, null)?.hotspot ?? null : null
-      const key = `${scene}|${view}|${clip}|${expr}|${cue}|${card ? card.at : ''}|${place}|${part}`
+      storyRuntime.spin = clip === 'Fly' && s.isPlaying ? 1 : 0
+      const hold = ch.hold ?? null
+      const key = `${hold}|${scene}|${view}|${clip}|${expr}|${cue}|${card ? card.at : ''}|${place}|${part}`
       if (key !== lastKey) {
         lastKey = key
         s.patchStory({
           storyScene: scene,
           storyView: view,
           storyClip: clip,
+          storyHold: hold,
           storyExpression: expr,
           cueIndex: cue,
           activeCard: card,

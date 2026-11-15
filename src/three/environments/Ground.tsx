@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import type { PlaceId } from '../../data/story'
 import { storyRuntime } from '../../story/runtime'
 import { getPlaceGeometry, placeHeight, surfaceDef, type PlaceDef } from './places'
+import { Rover } from './Rover'
 
 // Todo lo que hay aquí vive en coordenadas del TERRENO (x = xt, z = mundo) dentro de un grupo que MarsScene
 // desplaza según avanza el robot: así el robot no se mueve de sitio pero el suelo pasa por debajo.
@@ -242,8 +243,26 @@ function WheelDust({ def, color }: { def: PlaceDef; color: string }) {
     const m = ref.current
     if (!m) return
     const list = parts.current
-    const moving = storyRuntime.active && storyRuntime.robotVisible && (storyRuntime.speed > 0.04 || storyRuntime.slip > 0.1)
-    if (moving) {
+    const moving = storyRuntime.active && storyRuntime.robotVisible && (storyRuntime.speed > 0.04 || storyRuntime.slip > 0.1) && storyRuntime.alt < 0.3
+    // Ingenuity: la corriente de los rotores levanta polvo cerca del suelo.
+    const wash = storyRuntime.active && storyRuntime.robotVisible ? storyRuntime.spin * Math.max(0, 1 - storyRuntime.alt / 7) : 0
+    if (wash > 0.05) {
+      carry.current += wash * 38 * dt
+      while (carry.current >= 1) {
+        carry.current -= 1
+        const q = list.find((x) => x.age >= x.life)
+        if (!q) break
+        const a = Math.random() * Math.PI * 2
+        const rr = 0.5 + Math.random() * 1.1
+        const xt = def.startX + storyRuntime.robotX + Math.cos(a) * rr
+        const z = Math.sin(a) * rr
+        q.p.set(xt, placeHeight(def, xt, z) + 0.06, z)
+        q.v.set(Math.cos(a) * (1.6 + Math.random()), 0.15 + Math.random() * 0.4, Math.sin(a) * (1.6 + Math.random()))
+        q.age = 0
+        q.life = 0.8 + Math.random() * 0.8
+        q.s = 0.16 + Math.random() * 0.22
+      }
+    } else if (moving) {
       const rate = (storyRuntime.speed * 16 + storyRuntime.slip * 34) * (storyRuntime.sink > 0.01 ? 1.4 : 1)
       carry.current += rate * dt
       while (carry.current >= 1) {
@@ -302,7 +321,8 @@ export function Ground({ place }: { place: PlaceId }) {
           <Scatter def={def} count={def.boulders} seed={place.length * 3.1 + 1} minS={0.35} maxS={1.3} color={def.boulderColor} shadows />
           {def.props === 'eagle' && <EagleProps def={def} />}
           {def.props === 'veins' && <VeinProps def={def} />}
-          <Tracks def={def} />
+          {def.tracks !== false && <Tracks def={def} />}
+          <Rover def={def} />
           <WheelDust def={def} color={def.colors.high} />
         </>
       ) : (

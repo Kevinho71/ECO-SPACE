@@ -17,9 +17,21 @@ export type PlaceId =
   | 'victoria'
   | 'endeavour'
   | 'perseverance'
+  // Ingenuity (Jezero)
+  | 'jezero'
+  | 'airfield'
+  | 'outcrop'
+  | 'sandwaves'
+  // InSight (Elysium Planitia)
+  | 'elysium'
+  // Pathfinder (Ares Vallis)
+  | 'aresvallis'
 
-/** pov = ojo del robot · wide = vista exterior orbitando · part = primer plano de una pieza · flight = cámara cinematográfica del viaje */
-export type StoryView = 'pov' | 'wide' | 'part' | 'flight'
+/**
+ * pov = ojo del robot (1.ª persona) · wide = vista exterior orbitando · chase = cámara que persigue al robot en vuelo
+ * (3.ª persona) · part = primer plano de una pieza · flight = cámara cinematográfica del viaje
+ */
+export type StoryView = 'pov' | 'wide' | 'chase' | 'part' | 'flight'
 
 /** Pieza del robot que se enseña con la cámara 'part'. */
 export interface PartFocus {
@@ -57,6 +69,8 @@ export interface HudState {
   /** Etiqueta de fase (p. ej. durante el registro de vuelo). */
   phase?: string
   hidden?: boolean
+  /** Muestra la altitud en vivo (`storyRuntime.alt`) en la telemetría. */
+  showAlt?: boolean
 }
 
 export type SfxKind =
@@ -70,6 +84,10 @@ export type SfxKind =
   | 'powerdown'
   | 'relay'
   | 'blink'
+  | 'rotor' // rotores acelerando
+  | 'thud' // golpe seco contra el suelo
+  | 'quake' // martemoto
+  | 'hammer' // golpecitos del topo
 
 export interface StoryCard {
   at: number
@@ -122,10 +140,22 @@ export interface StoryChapter {
   battery: Keyframe<number>[]
   signal: Keyframe<number>[]
   clips: Keyframe<string>[]
+  /** Clip que se queda en su última pose durante el capítulo, mezclado con el clip actual (si no comparten huesos). */
+  hold?: string
   expressions: Keyframe<Expression>[]
   hud: Keyframe<HudState>[]
   sfx?: Keyframe<SfxKind>[]
   cards?: StoryCard[]
+  /** Altura sobre el suelo (m) del robot, si vuela (Ingenuity). Interpolada. */
+  alt?: Keyframe<number>[]
+  /** Cabeceo hacia delante al volar (rad; positivo = morro abajo). Interpolado. */
+  tilt?: Keyframe<number>[]
+  /** Inclinación extra de la mirada del POV (rad; negativo = mirar hacia abajo). Interpolada. */
+  gaze?: Keyframe<number>[]
+  /** Posición (m, mismo eje que `robotX`) de Perseverance en el lugar actual; ≥ 900 = fuera de escena. Interpolada. */
+  rover?: Keyframe<number>[]
+  /** Deterioro 0–1 (interpolado): palas rotas (Ingenuity) o polvo sobre los paneles solares (InSight). */
+  damage?: Keyframe<number>[]
   /** Marcas de sub-escenas dentro del capítulo (se ven en la línea de tiempo). */
   marks?: { t: number; label: string }[]
   /** Hitos del registro de vuelo (solo capítulos con escena 'flight'). */
@@ -139,6 +169,10 @@ export interface StoryChapter {
 export interface Story {
   missionId: string
   chapters: StoryChapter[]
+  /** Ajuste de la cámara 'wide' para robots pequeños: distancia de la órbita (m) y altura del punto que mira (m). */
+  view?: { wideDist: number; wideTarget: number }
+  /** Textos de la pantalla inicial. */
+  intro?: { kicker: string; name: string; blurb: string; button: string; short: string }
   /** Tarjeta de transparencia mostrada al terminar. */
   transparency: { title: string; body: string; sources: { label: string; url: string }[] }
 }

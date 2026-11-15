@@ -32,6 +32,8 @@ interface AppState {
   storyPart: string | null
   storyScene: 'surface' | 'flight'
   storyClip: string | null
+  /** Clip que se mantiene en su última pose junto al clip actual (p. ej. Sojourner ya fuera de la rampa). */
+  storyHold: string | null
   storyExpression: Expression
   cueIndex: number
   activeCard: StoryCard | null
@@ -100,6 +102,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   storyPart: null,
   storyScene: 'surface',
   storyClip: null,
+  storyHold: null,
   storyExpression: null,
   cueIndex: -1,
   activeCard: null,

@@ -48,7 +48,7 @@ export const opportunityStory: Story = {
       partFocus: [
         { t: 0, v: null },
         { t: 20.5, v: { node: 'mast_head', hotspot: 'pancam', dist: 1.7, az: 0.55, el: 0.12 } },
-        { t: 26.5, v: { node: 'arm', hotspot: 'arm', dist: 2.1, az: -0.3, el: 0.02 } },
+        { t: 26.5, v: { node: 'arm_turret', hotspot: 'arm', dist: 2.6, az: -1.0, el: 0.38 } },
         { t: 33.5, v: { node: 'deck', hotspot: 'panels', dist: 3.6, az: 2.5, el: 0.5 } },
         { t: 39.5, v: { node: 'wheel_RM', hotspot: 'wheels', dist: 3.0, az: 1.25, el: 0.12 } },
         { t: 46.5, v: { node: 'antenna', hotspot: 'antenna', dist: 1.9, az: 2.5, el: 0.25 } },
@@ -284,7 +284,7 @@ export const opportunityStory: Story = {
         { t: 92, v: 'pov' },
       ],
       partFocus: [
-        { t: 0, v: { node: 'arm', hotspot: 'none', dist: 2.1, az: -0.3, el: 0.02 } },
+        { t: 0, v: { node: 'arm_turret', hotspot: 'none', dist: 2.6, az: -1.0, el: 0.38 } },
         { t: 6, v: null },
       ],
       // La mirada recorre las capas de la roca y las esferas.

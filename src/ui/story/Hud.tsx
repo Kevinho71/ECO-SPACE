@@ -55,6 +55,7 @@ export function Hud() {
         <Bars value={storyRuntime.battery} label="BAT" />
         <Bars value={storyRuntime.signal} label="SEÑAL" />
       </div>
+      {hud.showAlt && <div className="mt-1 tracking-widest text-emerald-200">ALT {storyRuntime.alt.toFixed(1).replace('.', ',')} m</div>}
       {hud.temp && <div className="mt-1 tracking-widest text-sky-200">TEMP {hud.temp}</div>}
     </div>
   )

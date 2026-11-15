@@ -7,6 +7,7 @@ import { useAppStore } from '../../store/useAppStore'
 import { getStory } from '../../story/StoryDirector'
 import { FarMountains, SunDisc } from './Backdrop'
 import { Ground } from './Ground'
+import type { PlaceId } from '../../data/story'
 import { placeHeight, prewarmPlaces, surfaceDef } from './places'
 
 const SEED = 13
@@ -34,8 +35,14 @@ export function MarsScene() {
   // Construye los demás terrenos en segundo plano para que el parpadeo no tenga tirones.
   useEffect(() => {
     if (!hasStory) return
-    return prewarmPlaces(['eagle', 'purgatory', 'plains', 'endurance', 'victoria', 'endeavour', 'perseverance'])
-  }, [hasStory])
+    const story = getStory(missionId)
+    const ids = new Set<PlaceId>()
+    story?.chapters.forEach((c) => {
+      ids.add(c.place0)
+      c.jumps?.forEach((j) => ids.add(j.to))
+    })
+    return prewarmPlaces([...ids].filter((p) => p !== 'launch' && p !== 'cruise' && p !== 'entry'))
+  }, [hasStory, missionId])
 
   useFrame(({ scene }, dt) => {
     const d = storyRuntime.active ? storyRuntime.dust : 0

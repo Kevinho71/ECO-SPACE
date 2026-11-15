@@ -95,24 +95,25 @@ export function StoryCamera() {
     const gait = reduce ? 0.3 : 1
 
     if (view === 'pov') {
-      if (!head.current || !head.current.parent) head.current = scene.getObjectByName('mast_head') ?? null
       if (!eye.current || !eye.current.parent) eye.current = scene.getObjectByName('pov_eye') ?? null
+      // Orientación: el mástil (rovers) o, si no hay, el nodo padre del ojo (Ingenuity: su `pov_eye` apunta hacia abajo).
+      if (!head.current || !head.current.parent) head.current = scene.getObjectByName('mast_head') ?? eye.current?.parent ?? null
       if (head.current && eye.current) {
         head.current.getWorldQuaternion(q)
         q.multiply(fix)
         // Posición: el "ojo", un poco por delante de los ojos de la cara.
         eye.current.getWorldPosition(pos)
         fwd.set(0, 0, -1).applyQuaternion(q)
-        pos.addScaledVector(fwd, 0.1)
+        pos.addScaledVector(fwd, head.current?.name === 'mast_head' ? 0.1 : 0.45)
         // Mirada del usuario (relativa a la cámara de la historia) + panorámica automática.
         // Arrastrar mueve "el mundo" con el dedo: derecha → giro a la izquierda; abajo → mira arriba.
         // Base: mirada ligeramente hacia abajo para que se vea parte de la cubierta del rover.
-        euler.set(BASE_PITCH + storyRuntime.lookPitch, storyRuntime.lookYaw + storyRuntime.pan, 0)
+        euler.set(BASE_PITCH + storyRuntime.gaze + storyRuntime.lookPitch, storyRuntime.lookYaw + storyRuntime.pan, 0)
         look.setFromEuler(euler)
         q.multiply(look)
         // Balanceo de la suspensión mientras rueda: sube y baja con la distancia recorrida, y se inclina un poco.
         const sp = storyRuntime.speed
-        if (sp > 0.03 || storyRuntime.slip > 0.1) {
+        if ((sp > 0.03 || storyRuntime.slip > 0.1) && storyRuntime.alt < 0.3) {
           const ph = storyRuntime.robotX * 6.3
           const amp = Math.min(1, sp / 0.35 + storyRuntime.slip) * gait
           pos.y += Math.sin(ph) * 0.014 * amp + Math.sin(ph * 2.3 + 1) * 0.006 * amp
@@ -171,18 +172,38 @@ export function StoryCamera() {
         cam.fov = shot.fov
         cam.updateProjectionMatrix()
       }
+    } else if (view === 'chase') {
+      // 3.ª persona en vuelo: cámara que acompaña al robot (detrás y arriba) y sube con él.
+      sway.current += dt * 0.12
+      const alt = storyRuntime.alt
+      const a = Math.PI + 0.55 + Math.sin(sway.current) * 0.3
+      const r = 6.2 + Math.min(4, alt * 0.18)
+      pos.set(Math.cos(a) * r, 1.6 + alt * 0.85 + Math.min(2.5, alt * 0.12), Math.sin(a) * r)
+      wideTarget.set(1.5, 0.9 + alt * 0.97, 0)
+      m4.lookAt(pos, wideTarget, camera.up)
+      wideQuat.setFromRotationMatrix(m4)
+      const k = 1 - Math.exp(-dt * 3.2)
+      camera.position.lerp(pos, k)
+      camera.quaternion.slerp(wideQuat, k)
+      setFov(cam, 50, 3, dt)
+      wideTarget.set(0, 0.85, 0)
     } else {
-      // Vista exterior: órbita lenta alrededor del rover.
+      // Vista exterior: órbita lenta alrededor del robot (y a su altura, si vuela).
       sway.current += dt * 0.04
       const a = 0.9 + Math.sin(sway.current) * 0.35
-      const r = 7.5
-      pos.set(Math.cos(a) * r, 2.3, Math.sin(a) * r)
+      const vw = getStory(s.selectedMissionId)?.view
+      const r = vw?.wideDist ?? 7.5
+      const ty = vw?.wideTarget ?? 0.85
+      const ay = storyRuntime.alt * 0.9
+      pos.set(Math.cos(a) * r, ty + 1.45 * (r / 7.5) + ay, Math.sin(a) * r)
+      wideTarget.y = ty + ay
       m4.lookAt(pos, wideTarget, camera.up)
       wideQuat.setFromRotationMatrix(m4)
       const k = 1 - Math.exp(-dt * 2.2)
       camera.position.lerp(pos, k)
       camera.quaternion.slerp(wideQuat, k)
       setFov(cam, WIDE_FOV, 3, dt)
+      wideTarget.y = 0.85
     }
     void state
   })

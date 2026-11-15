@@ -188,6 +188,22 @@ export function playSfx(kind: SfxKind) {
     case 'blink':
       burst({ dur: 0.12, freq: 1400, gain: 0.12, type: 'bandpass', sweepTo: 600 })
       break
+    case 'rotor':
+      // rotores que se aceleran: zumbido grave que sube
+      beep(60, 4, 0.1, 'sawtooth', 190)
+      burst({ dur: 4, freq: 500, gain: 0.12, type: 'bandpass', sweepTo: 1500 })
+      break
+    case 'thud':
+      burst({ dur: 0.5, freq: 140, gain: 0.8, sweepTo: 45 })
+      burst({ dur: 0.25, freq: 1800, gain: 0.25, type: 'bandpass' })
+      break
+    case 'quake':
+      beep(38, 4.5, 0.25, 'sine', 24)
+      burst({ dur: 4.5, freq: 90, gain: 0.5, sweepTo: 40 })
+      break
+    case 'hammer':
+      ;[0, 0.18, 0.36, 0.54].forEach((d) => setTimeout(() => burst({ dur: 0.07, freq: 900, gain: 0.3, type: 'bandpass' }), d * 1000))
+      break
     case 'relay':
       burst({ dur: 0.06, freq: 2500, gain: 0.7, type: 'bandpass' })
       beep(90, 0.08, 0.2, 'square')

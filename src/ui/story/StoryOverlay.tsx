@@ -29,16 +29,16 @@ function StartScreen({ story }: { story: Story }) {
   const patch = useAppStore((s) => s.patchStory)
   return (
     <div className="pointer-events-auto absolute inset-0 z-[16] flex flex-col items-center justify-center bg-black px-6 text-center">
-      <p className="font-mono text-xs uppercase tracking-[0.4em] text-slate-500">Mars Exploration Rover · MER-B</p>
-      <h2 className="mt-4 text-4xl font-semibold text-white md:text-6xl">Opportunity</h2>
+      <p className="font-mono text-xs uppercase tracking-[0.4em] text-slate-500">{story.intro?.kicker ?? 'Mars Exploration Rover · MER-B'}</p>
+      <h2 className="mt-4 text-4xl font-semibold text-white md:text-6xl">{story.intro?.name ?? 'Opportunity'}</h2>
       <p className="mt-3 max-w-md text-slate-300">
-        Vas a vivir su historia <em>desde dentro</em>: tus ojos serán los suyos. Mira alrededor arrastrando.
+        {story.intro?.blurb ?? 'Vas a vivir su historia desde dentro: tus ojos serán los suyos. Mira alrededor arrastrando.'}
       </p>
       <button
         onClick={() => storyControls.start()}
         className="mt-8 rounded-full border border-white/40 bg-white/10 px-8 py-3 text-lg text-white transition hover:bg-white/25"
       >
-        ▶ Despertar a Oppy
+        ▶ {story.intro?.button ?? 'Despertar a Oppy'}
       </button>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-sm text-slate-400">
         <label className="flex cursor-pointer items-center gap-2">
@@ -231,7 +231,7 @@ function Inspector({ missionId }: { missionId: string }) {
       </div>
       <p className="mt-1 font-mono text-xs uppercase tracking-widest text-cyan-200">{h.fact}</p>
       <p className="mt-3 text-sm leading-relaxed text-slate-200">{h.explain}</p>
-      <p className="mt-3 text-[11px] text-slate-500">Datos: NASA / NSSDC</p>
+      <p className="mt-3 text-[11px] text-slate-500">Datos: NASA / JPL</p>
     </aside>
   )
 }
@@ -241,7 +241,7 @@ function ExploreHint() {
   if (mode !== 'free') return null
   return (
     <p className="pointer-events-none absolute inset-x-0 top-24 z-[14] text-center text-sm text-slate-300/80">
-      Arrastra para girar alrededor de Oppy · pulsa los puntos brillantes para ver sus partes
+      Arrastra para girar alrededor del robot · pulsa los puntos brillantes para ver sus partes
     </p>
   )
 }
