@@ -32,6 +32,13 @@ function musicTrack(id: string): MusicTrack | null {
     const el = new Audio(`${import.meta.env.BASE_URL}audio/music/${id}.mp3`)
     el.loop = true
     el.preload = 'auto'
+    // La pista del menú puede no existir todavía (npm run music): mientras tanto suena «despertar».
+    if (id === 'menu')
+      el.addEventListener('error', () => {
+        if (el.src.endsWith('/despertar.mp3')) return
+        el.src = `${import.meta.env.BASE_URL}audio/music/despertar.mp3`
+        if (musicId === 'menu' && !paused) void el.play().catch(() => undefined)
+      })
     const gain = ctx.createGain()
     gain.gain.value = 0
     ctx.createMediaElementSource(el).connect(gain).connect(master)
@@ -350,10 +357,37 @@ export function playSfx(kind: SfxKind) {
   }
 }
 
+/** Apaga el ambiente de la historia (viento, estática, tono) para que no se oiga en los menús. */
+function silenceAmbient() {
+  if (!ctx) return
+  const now = ctx.currentTime
+  for (const g of [wind?.gain, stat?.gain, tone?.gain]) g?.gain.setTargetAtTime(0, now, 0.1)
+}
+
 export function stopAudio() {
   stopVoice()
   setMusic(null)
+  silenceAmbient()
   if (ctx) {
     void ctx.suspend()
   }
+}
+
+/** ¿El visitante ya ha interactuado con la página? (el navegador solo deja sonar el audio tras un gesto). */
+export function userHasInteracted(): boolean {
+  const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
+  return ua ? ua.hasBeenActive : ctx !== null
+}
+
+/**
+ * Música de fondo del menú principal (splash, sistema solar, catálogo). Llamar desde un gesto del usuario o
+ * después de uno; es seguro llamarla varias veces. La historia la sustituye con un fundido al empezar.
+ */
+export function startMenuMusic(soundOn = true) {
+  startAudio()
+  enabled = soundOn
+  paused = false
+  silenceAmbient()
+  setMusic('menu')
+  applyMaster()
 }

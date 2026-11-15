@@ -14,6 +14,7 @@ const focus = (node: string, hotspot: string, dist: number, az: number, el: numb
 
 export const pathfinderStory: Story = {
   missionId: 'pathfinder',
+  texts: { exploreLabel: 'Explorar el módulo', exploreHint: 'Arrastra para girar alrededor de Pathfinder · pulsa los puntos brillantes o usa los botones para moverlo' },
   // La estación es pequeña: la cámara exterior se acerca.
   view: { wideDist: 3.8, wideTarget: 0.4 },
   intro: {
@@ -497,6 +498,37 @@ export const pathfinderStory: Story = {
         { at: 7.6, dur: 4.2, kind: 'note', text: 'ÚLTIMA TRANSMISIÓN · 27 SEP 1997' },
         { at: 21, dur: 6, kind: 'note', text: 'COMUNICACIÓN PERDIDA «POR RAZONES DESCONOCIDAS» · NSSDC' },
       ],
+    },
+  ],
+
+  // Modo Explorar: escenario base y acciones del robot (clips del GLB).
+  explore: {
+    place: 'aresvallis',
+    drive: { kind: 'rover-node', node: 'sojourner', maxSpeed: 0.7, radius: 14, label: 'Manejar a Sojourner' },
+    actions: [
+      { id: 'open', label: 'Abrir pétalos', hint: 'Los tres pétalos se despliegan', clip: 'Open', duration: 3, focus: 'petals' },
+      { id: 'drive', label: 'Soltar a Sojourner', hint: 'El rover baja por la rampa', clip: 'Drive!', duration: 10, focus: 'sojourner' },
+      { id: 'airbags', label: 'Inflar airbags', hint: 'Los airbags se hinchan y se pliegan', motion: 'pathfinder-airbags', duration: 6, focus: 'airbags' },
+      { id: 'camera', label: 'Mirar con la cámara', hint: 'La cabeza del mástil gira', motion: 'pathfinder-camera', duration: 7, focus: 'mast' },
+    ],
+  },
+
+  whatIfs: [
+    {
+      id: 'airbags',
+      question: 'los airbags no hubieran aguantado los rebotes',
+      imagine:
+        'Si los airbags se hubieran roto en los primeros impactos, el módulo habría golpeado el suelo sin amortiguación y Sojourner quizá nunca habría bajado por su rampa.',
+      reality:
+        'Pathfinder chocó a unos 18 m/s y rebotó al menos 15 veces; el primer rebote superó los diez metros de altura. Se detuvo unos 2,5 minutos después, a cerca de un kilómetro del primer impacto.',
+      science:
+        'Los airbags se inflaron en unos 0,3 s hasta formar una bola de 5,2 m y absorbieron la energía rebotando en vez de frenar de golpe. Según el JPL, el sistema de airbags y pétalos se usó después, en varias versiones, para aterrizar otros rovers en Marte.',
+      sources: [
+        { label: 'JPL — Mars Pathfinder / Sojourner Rover', url: 'https://www.jpl.nasa.gov/missions/mars-pathfinder-sojourner-rover' },
+        { label: 'NSSDC — Mars Pathfinder (1996-068A)', url: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1996-068A' },
+      ],
+      focus: 'airbags',
+      action: 'airbags',
     },
   ],
 

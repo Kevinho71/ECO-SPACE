@@ -246,8 +246,81 @@ export const DEFAULT_STORY_TEXTS: StoryTexts = {
   endKicker: '¿Qué dijo de verdad?',
 }
 
+/**
+ * Tarjeta expandible "¿Qué pasaría si…?" del modo Explorar (contrafactual educativo).
+ * Siempre se muestra como HIPOTÉTICA; debe nacer de un hecho documentado y citar fuentes.
+ */
+export interface WhatIfCard {
+  id: string
+  /** Completa "¿Qué pasaría si …?" (sin signos). */
+  question: string
+  /** El escenario imaginado (1–3 frases, en condicional). */
+  imagine: string
+  /** Lo que sí ocurrió (el "reality check"). */
+  reality: string
+  /** La ciencia o ingeniería que explica el contraste. */
+  science: string
+  sources: { label: string; url: string }[]
+  /** Hotspot (id de `HOTSPOTS`) que se resalta al abrir la tarjeta. */
+  focus?: string
+  /** Acción del robot (`ExploreAction.id`) que ilustra la tarjeta. */
+  action?: string
+}
+
+/**
+ * Acción que el usuario puede lanzar en Explorar. Usa un clip del GLB (`clip`) o un movimiento por código
+ * (`motion`, ver `src/three/exploreActions.ts`), o ambos a la vez.
+ */
+export interface ExploreAction {
+  id: string
+  label: string
+  /** Frase corta bajo el botón. */
+  hint: string
+  /** Clip del GLB. Acabado en «!» = una sola vez y queda en su última pose hasta que acabe la acción. */
+  clip?: string
+  /** Movimiento procedural (clave de `EXPLORE_MOTIONS`). */
+  motion?: string
+  /** Segundos que dura antes de volver a Idle. */
+  duration: number
+  /** Hotspot que se enseña mientras dura. */
+  focus?: string
+}
+
+/**
+ * Conducción libre tras el final de la historia (solo robots que se mueven de verdad).
+ *  - 'wheels': el robot rueda por la zona (el suelo se desplaza bajo él).
+ *  - 'fly': vuela libremente sobre la zona (también sube y baja).
+ *  - 'rover-node': el robot principal se queda quieto y se maneja un rover que lleva dentro del modelo (Sojourner).
+ */
+export interface DriveConfig {
+  kind: 'wheels' | 'fly' | 'rover-node'
+  /** Velocidad máxima (m/s). Más rápida que la real, para que explorar sea ágil. */
+  maxSpeed: number
+  /** Nodo del GLB que se maneja (solo 'rover-node'). */
+  node?: string
+  /** Radio máximo (m) alrededor del punto de partida (solo 'rover-node'). Por defecto 14. */
+  radius?: number
+  /** Altura máxima (m) (solo 'fly'). Por defecto 12. */
+  maxAlt?: number
+  /** Texto del botón de la pantalla final. */
+  label: string
+}
+
+/** Modo Explorar: escenario base y acciones del robot. */
+export interface ExploreConfig {
+  /** Lugar en el que se explora el robot (superficie, sin depender del capítulo en curso). */
+  place: PlaceId
+  actions: ExploreAction[]
+  /** Si el robot se mueve, permite recorrer la zona al terminar la historia. */
+  drive?: DriveConfig
+}
+
 export interface Story {
   missionId: string
+  /** Tarjetas "¿Qué pasaría si…?" que aparecen al explorar el robot. */
+  whatIfs?: WhatIfCard[]
+  /** Escenario y acciones del modo Explorar. */
+  explore?: ExploreConfig
   /** Textos propios de las pantallas de esta historia (opcional). */
   texts?: Partial<StoryTexts>
   chapters: StoryChapter[]

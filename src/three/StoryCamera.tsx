@@ -4,7 +4,8 @@ import * as THREE from 'three'
 import { useAppStore } from '../store/useAppStore'
 import { storyRuntime } from '../story/runtime'
 import { getStory } from '../story/StoryDirector'
-import { sampleLinear, sampleStep, type WideShot } from '../data/story'
+import { sampleLinear, sampleStep, type StoryView, type WideShot } from '../data/story'
+import { driveRuntime } from '../story/drive'
 import { flightShot } from './environments/flightPath'
 import { placeHeight, surfaceDef } from './environments/places'
 
@@ -57,7 +58,7 @@ export function StoryCamera() {
     let lx = 0
     let ly = 0
     const down = (e: PointerEvent) => {
-      if (useAppStore.getState().cameraMode !== 'guided') return
+      if (useAppStore.getState().cameraMode === 'free') return
       dragging = true
       lx = e.clientX
       ly = e.clientY
@@ -91,10 +92,17 @@ export function StoryCamera() {
   }
 
   useFrame((state, dt) => {
-    if (cameraMode !== 'guided') return
+    if (cameraMode === 'free') return
     const cam = camera as THREE.PerspectiveCamera
     const s = useAppStore.getState()
-    const view = s.storyView
+    // El usuario puede forzar 1.ª o 3.ª persona; los primeros planos de piezas y el viaje (cortes de narración) no se tocan.
+    let view: StoryView | 'drivecam' = s.storyView
+    if (cameraMode === 'drive') {
+      // Conducción libre: 3.ª persona detrás del robot, o sus ojos (el rover del modelo no tiene).
+      view = s.viewOverride === 'pov' && driveRuntime.cfg?.kind !== 'rover-node' ? 'pov' : 'drivecam'
+    } else if (s.viewOverride !== 'auto' && view !== 'part' && view !== 'flight') {
+      view = s.viewOverride === 'pov' ? 'pov' : storyRuntime.alt > 0.3 ? 'chase' : 'wide'
+    }
     const reduce = s.reduceEffects
     const gait = reduce ? 0.3 : 1
 
@@ -189,6 +197,27 @@ export function StoryCamera() {
         cam.fov = shot.fov
         cam.updateProjectionMatrix()
       }
+    } else if (view === 'drivecam') {
+      const dr = driveRuntime
+      if (dr.cfg?.kind === 'rover-node') {
+        // Sigue a Sojourner desde detrás y un poco arriba.
+        const fx = Math.cos(dr.sa)
+        const fz = -Math.sin(dr.sa)
+        pos.set(dr.sx - fx * 1.7, dr.sy + 0.85, dr.sz - fz * 1.7)
+        wideTarget.set(dr.sx + fx * 0.8, dr.sy + 0.25, dr.sz + fz * 0.8)
+      } else {
+        // El robot mira siempre a +X (es el mundo el que gira): cámara fija detrás, con un leve giro al virar y altura al volar.
+        const alt = storyRuntime.alt
+        pos.set(-6.4, 1.9 + alt * 0.85, -dr.steer * 1.4)
+        wideTarget.set(1.6, 0.9 + alt * 0.97, dr.steer * 0.6)
+      }
+      m4.lookAt(pos, wideTarget, camera.up)
+      wideQuat.setFromRotationMatrix(m4)
+      const k = 1 - Math.exp(-dt * 4)
+      camera.position.lerp(pos, k)
+      camera.quaternion.slerp(wideQuat, k)
+      setFov(cam, dr.cfg?.kind === 'rover-node' ? 55 : 50, 3, dt)
+      wideTarget.set(0, 0.85, 0)
     } else if (view === 'chase') {
       // 3.ª persona en vuelo: cámara que acompaña al robot (detrás y arriba) y sube con él.
       sway.current += dt * 0.12

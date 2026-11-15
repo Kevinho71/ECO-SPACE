@@ -97,7 +97,8 @@ Regla de oro del motor: **valores continuos → `storyRuntime` (mutable); valore
 - No inventar "últimas palabras". No dar el número de rebotes. No dar cifras de imágenes contradictorias.
 - Citas en inglés original con traducción; atribuir autor y fuente.
 - Accesibilidad: subtítulos, sonido on/off, "reducir estática y vibración" siempre funcionales.
-- Los "¿Qué pasaría si…?" están fuera de alcance hasta nueva orden.
+- Los "¿Qué pasaría si…?" son tarjetas expandibles del modo Explorar: `whatIfs` en el archivo de la historia (ver `opportunity.ts`, piloto), cada una con `imagine`, `reality`, `science` y `sources`. Siempre HIPOTÉTICAS, nacen de un hecho documentado con fuente y no llevan voz.
+- Acciones del robot en Explorar: `explore: { place, actions }` en el mismo archivo. Una acción usa un clip del GLB (`clip`, con «!» = una sola vez) y/o un movimiento por código (`motion`, registrado en `src/three/exploreMotions.ts`).
 
 ---
 

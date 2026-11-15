@@ -35,8 +35,10 @@ export function Hud() {
     return () => clearInterval(id)
   }, [])
 
+  const exploring = useAppStore((s) => s.cameraMode !== 'guided')
   const ch = story?.chapters[chapterIdx]
-  if (!ch) return null
+  // En Explorar no hay feed del robot: se oculta la telemetría de la historia.
+  if (!ch || exploring) return null
   const hud = sampleStep(ch.hud, storyRuntime.t, ch.hud[0].v)
   if (hud.hidden) return null
   const glitch = storyRuntime.staticLevel > 0.5 && Math.random() < 0.15

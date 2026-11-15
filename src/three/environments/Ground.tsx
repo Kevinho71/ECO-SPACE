@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { PlaceId } from '../../data/story'
 import { storyRuntime } from '../../story/runtime'
+import { driveRuntime } from '../../story/drive'
 import { getPlaceGeometry, placeHeight, surfaceDef, type PlaceDef } from './places'
 import { Rover } from './Rover'
 
@@ -214,7 +215,7 @@ function Tracks({ def }: { def: PlaceDef }) {
     const rear = def.startX + storyRuntime.robotX - 0.6
     built.forEach(({ g, x0 }) => {
       const n = THREE.MathUtils.clamp(Math.floor((rear - x0) / TRACK_STEP), 0, g.index!.count / 6)
-      g.setDrawRange(0, storyRuntime.active ? n * 6 : 0)
+      g.setDrawRange(0, storyRuntime.active && !driveRuntime.moveWorld ? n * 6 : 0)
     })
   })
 
@@ -230,6 +231,16 @@ function Tracks({ def }: { def: PlaceDef }) {
 }
 
 const DUST_N = 90
+
+/** Punto del terreno a (a) metros por delante y (b) a la derecha del robot, y su rotación de vectores (por rumbo). */
+function atRobot(def: PlaceDef, a: number, b: number): { x: number; z: number; c: number; s: number } {
+  if (driveRuntime.active && driveRuntime.moveWorld) {
+    const c = Math.cos(driveRuntime.heading)
+    const s = Math.sin(driveRuntime.heading)
+    return { x: driveRuntime.x + a * c - b * s, z: driveRuntime.z + a * s + b * c, c, s }
+  }
+  return { x: def.startX + storyRuntime.robotX + a, z: b, c: 1, s: 0 }
+}
 
 function WheelDust({ def, color }: { def: PlaceDef; color: string }) {
   const ref = useRef<THREE.InstancedMesh>(null)
@@ -254,10 +265,10 @@ function WheelDust({ def, color }: { def: PlaceDef; color: string }) {
         if (!q) break
         const a = Math.random() * Math.PI * 2
         const rr = 0.5 + Math.random() * 1.1
-        const xt = def.startX + storyRuntime.robotX + Math.cos(a) * rr
-        const z = Math.sin(a) * rr
-        q.p.set(xt, placeHeight(def, xt, z) + 0.06, z)
+        const w = atRobot(def, Math.cos(a) * rr, Math.sin(a) * rr)
+        q.p.set(w.x, placeHeight(def, w.x, w.z) + 0.06, w.z)
         q.v.set(Math.cos(a) * (1.6 + Math.random()), 0.15 + Math.random() * 0.4, Math.sin(a) * (1.6 + Math.random()))
+        q.v.set(q.v.x * w.c - q.v.z * w.s, q.v.y, q.v.x * w.s + q.v.z * w.c)
         q.age = 0
         q.life = 0.8 + Math.random() * 0.8
         q.s = 0.16 + Math.random() * 0.22
@@ -270,10 +281,11 @@ function WheelDust({ def, color }: { def: PlaceDef; color: string }) {
         const q = list.find((x) => x.age >= x.life)
         if (!q) break
         const side = Math.random() < 0.5 ? -1 : 1
-        const xt = def.startX + storyRuntime.robotX - 0.55 - Math.random() * 0.5
-        const z = side * (0.5 + Math.random() * 0.4)
-        q.p.set(xt, placeHeight(def, xt, z) + 0.08, z)
-        q.v.set(-0.25 - Math.random() * 0.5, 0.25 + Math.random() * 0.45, side * (0.1 + Math.random() * 0.4))
+        const w = atRobot(def, -0.55 - Math.random() * 0.5, side * (0.5 + Math.random() * 0.4))
+        q.p.set(w.x, placeHeight(def, w.x, w.z) + 0.08, w.z)
+        const vx = -0.25 - Math.random() * 0.5
+        const vz = side * (0.1 + Math.random() * 0.4)
+        q.v.set(vx * w.c - vz * w.s, 0.25 + Math.random() * 0.45, vx * w.s + vz * w.c)
         q.age = 0
         q.life = 0.9 + Math.random() * 0.9
         q.s = 0.14 + Math.random() * 0.2

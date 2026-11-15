@@ -599,6 +599,35 @@ export const surveyor3Story: Story = {
     },
   ],
 
+  // Modo Explorar: escenario base y acciones del robot (clips del GLB).
+  explore: {
+    place: 'oceanus',
+    actions: [
+      { id: 'wake', label: 'Encender la cámara', hint: 'La cámara de TV se orienta', clip: 'Wake', duration: 3, focus: 'tv' },
+      { id: 'dig', label: 'Excavar', hint: 'El brazo hunde su pala en el suelo', clip: 'Dig', duration: 4, focus: 'sampler' },
+      { id: 'look', label: 'Mirar alrededor', hint: 'La cámara de TV gira a un lado y a otro', motion: 'surveyor3-tv', duration: 7, focus: 'tv' },
+    ],
+  },
+
+  whatIfs: [
+    {
+      id: 'apolo12',
+      question: 'el Apolo 12 no hubiera aterrizado junto a Surveyor 3',
+      imagine:
+        'Sin esa visita, Surveyor 3 habría seguido solo en la ladera de su cráter, y su cámara y su pala se habrían quedado en la Luna.',
+      reality:
+        'El 19 de noviembre de 1969 el Apolo 12 alunizó a unos 180 m de Surveyor 3. Los astronautas caminaron hasta él y se llevaron su cámara y su pala a la Tierra.',
+      science:
+        'Posarse tan cerca de una nave ya instalada exigió una precisión notable para la época. Y traer piezas que habían pasado 31 meses en la Luna permitió analizarlas en la Tierra.',
+      sources: [
+        { label: 'NASA Science — Surveyor 3', url: 'https://science.nasa.gov/mission/surveyor-3/' },
+        { label: 'NSSDC — Surveyor 3 (1967-035A)', url: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1967-035A' },
+      ],
+      focus: 'sampler',
+      action: 'dig',
+    },
+  ],
+
   transparency: {
     title: '¿Sobrevivieron bacterias en la Luna dentro de la cámara?',
     body: 'Al analizar la cámara que trajo el Apolo 12, los científicos encontraron una bacteria (Streptococcus mitis) en una espuma del interior. Durante años se contó que había sobrevivido 31 meses en la Luna. Pero los informes de la NASA no lo dejan claro: pudo estar allí desde antes del lanzamiento, o llegar después, ya en la Tierra, durante el análisis. Las demás piezas de la cámara no tenían bacterias. Por eso esta historia no lo cuenta como un hecho.',

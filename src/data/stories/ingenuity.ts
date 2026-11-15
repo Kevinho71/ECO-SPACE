@@ -13,6 +13,7 @@ const focus = (node: string, hotspot: string, dist: number, az: number, el: numb
 
 export const ingenuityStory: Story = {
   missionId: 'ingenuity',
+  texts: { exploreLabel: 'Explorar a Ingenuity', exploreHint: 'Arrastra para girar alrededor de Ingenuity · pulsa los puntos brillantes o usa los botones para moverlo' },
   intro: {
     kicker: 'Mars 2020 · Helicóptero de Marte',
     name: 'Ingenuity',
@@ -613,6 +614,36 @@ export const ingenuityStory: Story = {
       cards: [
         { at: 7.4, dur: 4.4, kind: 'note', text: 'SEÑAL PERDIDA · VUELO 072 · 18 ENE 2024' },
       ],
+    },
+  ],
+
+  // Modo Explorar: escenario base y acciones del robot (clips del GLB).
+  explore: {
+    place: 'airfield',
+    drive: { kind: 'fly', maxSpeed: 6, maxAlt: 12, label: 'Volar sobre la zona' },
+    actions: [
+      { id: 'wake', label: 'Girar rotores', hint: 'Los dos rotores arrancan', clip: 'Wake', duration: 3, focus: 'rotors' },
+      { id: 'fly', label: 'Despegar', hint: 'Se eleva 1,2 m y se queda en el aire', clip: 'Fly!', duration: 4, focus: 'rotors' },
+      { id: 'damage', label: 'Ver las palas rotas', hint: 'Cómo quedaron las palas tras el vuelo 72', motion: 'ingenuity-damage', duration: 6, focus: 'rotors' },
+    ],
+  },
+
+  whatIfs: [
+    {
+      id: 'vuelo-72',
+      question: 'las palas no se hubieran dañado en el vuelo 72',
+      imagine:
+        'Con las palas intactas, Ingenuity habría podido despegar otra vez y seguir acompañando a Perseverance desde el aire.',
+      reality:
+        'En el vuelo 72, el 18 de enero de 2024, el aterrizaje fue brusco y las cuatro palas se partieron. Ingenuity no volvió a volar, aunque siguió enviando datos del clima a Perseverance.',
+      science:
+        'La investigación del JPL apuntó a un terreno de ondulaciones de arena empinadas y sin textura: el sistema de navegación tenía muy poca información que seguir. Håvard Grip: “Lack of surface texture gave the navigation system too little information to work with.”',
+      sources: [
+        { label: 'JPL — NASA Performs First Aircraft Accident Investigation on Another World', url: 'https://www.jpl.nasa.gov/news/nasa-performs-first-aircraft-accident-investigation-on-another-world/' },
+        { label: 'JPL — After Three Years on Mars, Ingenuity Helicopter Mission Ends', url: 'https://www.jpl.nasa.gov/news/after-three-years-on-mars-nasas-ingenuity-helicopter-mission-ends/' },
+      ],
+      focus: 'rotors',
+      action: 'damage',
     },
   ],
 

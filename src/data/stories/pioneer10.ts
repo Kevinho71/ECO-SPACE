@@ -467,6 +467,35 @@ export const pioneer10Story: Story = {
     },
   ],
 
+  // Modo Explorar: escenario base y acciones del robot (clips del GLB).
+  explore: {
+    place: 'outbound',
+    actions: [
+      { id: 'wake', label: 'Despertar', hint: 'Mueve la cabeza de la antena', clip: 'Wake', duration: 3, focus: 'dish' },
+      { id: 'spin', label: 'Girar la sonda', hint: 'Gira sobre su eje, como al estabilizarse', clip: 'Spin', duration: 13, focus: 'dish' },
+      { id: 'boom', label: 'Desplegar el magnetómetro', hint: 'El brazo del magnetómetro se abre hacia fuera', motion: 'pioneer10-boom', duration: 6, focus: 'mag' },
+    ],
+  },
+
+  whatIfs: [
+    {
+      id: 'radiacion',
+      question: 'la radiación de Júpiter hubiera sido aún más fuerte',
+      imagine:
+        'Con más radiación, la electrónica de Pioneer 10 habría sufrido todavía más y quizá no habría podido completar el sobrevuelo ni enviar sus datos.',
+      reality:
+        'La radiación de Júpiter provocó órdenes falsas en la nave y dañó un instrumento (el fotopolarímetro); la imagen de Ío se perdió. Aun así, Pioneer 10 siguió su camino.',
+      science:
+        'Pioneer 10 fue la primera nave en visitar Júpiter y se encontró de cerca con una radiación capaz de alterar la electrónica de una sonda.',
+      sources: [
+        { label: 'NASA Science — Pioneer 10', url: 'https://science.nasa.gov/mission/pioneer-10/' },
+        { label: 'NASA History — 50 Years Ago: Pioneer 10 Launches to Explore Jupiter', url: 'https://www.nasa.gov/history/50-years-ago-pioneer-10-launches-to-explore-jupiter/' },
+      ],
+      focus: 'mag',
+      action: 'boom',
+    },
+  ],
+
   transparency: {
     title: '¿Pioneer 10 chocará con Aldebarán?',
     body: 'No. La sonda se dirige hacia esa estrella, y la NASA calcula que llegará a sus proximidades en unos dos millones de años. Desde 2003 no se recibe ninguna señal de ella: su energía nuclear se fue agotando, y ya no alcanzaba para transmitir. En esta historia, Pioneer 10 cuenta lo que vivió, sin prometer un encuentro que la NASA no anuncia.',

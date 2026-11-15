@@ -3,6 +3,7 @@ import { Environment, Lightformer, Sparkles } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { storyRuntime } from '../../story/runtime'
+import { driveRuntime } from '../../story/drive'
 import { useAppStore } from '../../store/useAppStore'
 import { getStory } from '../../story/StoryDirector'
 import { FarMountains, SunDisc } from './Backdrop'
@@ -64,18 +65,27 @@ export function MarsScene() {
     // El suelo se desplaza: el robot siempre está en x = 0 y el terreno pasa por debajo.
     const g = ground.current
     if (!g) return
-    const xt = def.startX + (storyRuntime.active ? storyRuntime.robotX : 0)
-    const hF = (z: number) => placeHeight(def, xt + WHEEL_BASE, z)
-    const hR = (z: number) => placeHeight(def, xt - WHEEL_BASE, z)
-    const fl = hF(-TRACK), fr = hF(TRACK), rl = hR(-TRACK), rr = hR(TRACK)
+    // Conducción libre (tras el final): posición y rumbo sobre el terreno; en la historia, solo avanza por x.
+    const driving = driveRuntime.active && driveRuntime.moveWorld
+    const px = driving ? driveRuntime.x : def.startX + (storyRuntime.active ? storyRuntime.robotX : 0)
+    const pz = driving ? driveRuntime.z : 0
+    const th = driving ? driveRuntime.heading : 0
+    const c = Math.cos(th), s = Math.sin(th)
+    // Alturas bajo las cuatro ruedas: f = frente del robot, r = su derecha (en coordenadas del terreno).
+    const hAt = (a: number, b: number) => placeHeight(def, px + c * a - s * b, pz + s * a + c * b)
+    const fl = hAt(WHEEL_BASE, -TRACK), fr = hAt(WHEEL_BASE, TRACK), rl = hAt(-WHEEL_BASE, -TRACK), rr = hAt(-WHEEL_BASE, TRACK)
     const h0 = (fl + fr + rl + rr) / 4
-    const pitch = Math.atan(((fl + fr) / 2 - (rl + rr) / 2) / (2 * WHEEL_BASE))
-    const roll = Math.atan(((fl + rl) / 2 - (fr + rr) / 2) / (2 * TRACK))
+    // En vuelo el robot no copia el relieve: se nivela con la altura.
+    const level = driving ? Math.max(0, 1 - storyRuntime.alt / 1.5) : 1
+    const pitch = Math.atan(((fl + fr) / 2 - (rl + rr) / 2) / (2 * WHEEL_BASE)) * level
+    const roll = Math.atan(((fl + rl) / 2 - (fr + rr) / 2) / (2 * TRACK)) * level
     const k = 1 - Math.exp(-dt * 9)
     storyRuntime.groundY = THREE.MathUtils.lerp(storyRuntime.groundY, h0, k)
     storyRuntime.pitch = THREE.MathUtils.lerp(storyRuntime.pitch, pitch, k)
     storyRuntime.roll = THREE.MathUtils.lerp(storyRuntime.roll, roll, k)
-    g.position.set(-xt, -storyRuntime.groundY, 0)
+    // El robot está en el origen mirando a +X: el terreno se traslada (−P) y se gira (rumbo) bajo él.
+    g.rotation.y = th
+    g.position.set(-(px * c + pz * s), -storyRuntime.groundY, -(-px * s + pz * c))
   })
 
   return (

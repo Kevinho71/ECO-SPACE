@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import type { Expression, PlaceId, StoryCard, StoryView } from '../data/story'
+import { SOUND_OFF_KEY, readFlag } from '../lib/prefs'
 
 export type ViewStage = 'splash' | 'solar-map' | 'planet-map' | 'mission-scene'
 export type LocationId = 'moon' | 'mars' | 'beyond'
-export type CameraMode = 'guided' | 'free'
+export type CameraMode = 'guided' | 'free' | 'drive'
 /** Cómo se llegó al mapa planetario: desde el sistema solar o volviendo de ver un robot. */
 export type Arrival = 'enter' | 'return'
 
@@ -27,6 +28,8 @@ interface AppState {
   storyStarted: boolean
   storyEnded: boolean
   storyView: StoryView
+  /** Vista elegida por el usuario: 'auto' sigue la cámara de la historia; 'pov' = 1.ª persona; 'wide' = 3.ª persona. */
+  viewOverride: 'auto' | 'pov' | 'wide'
   storyPlace: PlaceId
   /** Id del hotspot de la pieza que se está enseñando (cámara 'part'). */
   storyPart: string | null
@@ -38,6 +41,9 @@ interface AppState {
   cueIndex: number
   activeCard: StoryCard | null
   chapterBanner: number // se incrementa al empezar un capítulo (dispara el título)
+  /** Modo Explorar: acción del robot en curso (id de `ExploreAction`) y contador para poder repetir la misma. */
+  exploreAction: string | null
+  exploreNonce: number
   subtitlesOn: boolean
   soundOn: boolean
   reduceEffects: boolean
@@ -98,6 +104,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   storyStarted: false,
   storyEnded: false,
   storyView: 'pov',
+  viewOverride: 'auto',
   storyPlace: 'generic',
   storyPart: null,
   storyScene: 'surface',
@@ -107,8 +114,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   cueIndex: -1,
   activeCard: null,
   chapterBanner: 0,
+  exploreAction: null,
+  exploreNonce: 0,
   subtitlesOn: true,
-  soundOn: true,
+  soundOn: !readFlag(SOUND_OFF_KEY),
   reduceEffects: false,
   veil: false,
   arrival: 'enter',

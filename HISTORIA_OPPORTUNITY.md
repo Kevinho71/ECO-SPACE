@@ -352,7 +352,7 @@ Para que cada capítulo sea defendible ante un revisor:
 
 ## 9. Fuera de alcance por ahora
 
-- **Los "¿Qué pasaría si…?" no se desarrollan.** Quedan *reservados* los puntos de bifurcación que ya define `PLAN.md` §8 (Opportunity: la tormenta de 2018), sin guion ni UI hasta nueva orden.
+- **"¿Qué pasaría si…?" (piloto implementado como tarjeta de Explorar):** *"…la tormenta de polvo de 2018 no hubiera tapado el Sol"*. Vive en `whatIfs` de `src/data/stories/opportunity.ts` y se muestra como tarjeta expandible (Imagina · Lo que sí pasó · La ciencia detrás) en el panel izquierdo del modo Explorar, marcada HIPOTÉTICO. Lección: un rover solar vive de la luz (tau estimado 10,8; Sol tapado ~4 meses; fuente JPL [15]). El texto de "Imagina" es licencia narrativa; "Lo que sí pasó" y "La ciencia" salen de la fuente.
 - Los otros 6 robots (Eagle, Surveyor 3, Pathfinder, InSight, Ingenuity, Pioneer 10): se reutilizará esta estructura (§3, §4, §6) cuando este piloto se apruebe.
 
 ---

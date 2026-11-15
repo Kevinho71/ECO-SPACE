@@ -14,6 +14,7 @@ const focus = (node: string, hotspot: string, dist: number, az: number, el: numb
 
 export const insightStory: Story = {
   missionId: 'insight',
+  texts: { exploreLabel: 'Explorar a InSight', exploreHint: 'Arrastra para girar alrededor de InSight · pulsa los puntos brillantes o usa los botones para moverlo' },
   intro: {
     kicker: 'Módulo de aterrizaje geofísico · Marte',
     name: 'InSight',
@@ -543,6 +544,35 @@ export const insightStory: Story = {
         { t: 7.3, v: 'relay' },
       ],
       cards: [{ at: 8, dur: 4, kind: 'note', text: 'ÚLTIMA COMUNICACIÓN · 15 DIC 2022' }],
+    },
+  ],
+
+  // Modo Explorar: escenario base y acciones del robot (clips del GLB).
+  explore: {
+    place: 'elysium',
+    actions: [
+      { id: 'wake', label: 'Desplegar paneles', hint: 'Los paneles se abren y el mástil se levanta', clip: 'Wake', duration: 3, focus: 'panels' },
+      { id: 'dig', label: 'Mover el brazo', hint: 'El brazo se extiende hacia el suelo', clip: 'Dig', duration: 5, focus: 'arm' },
+      { id: 'mole', label: 'Hacer trabajar al topo', hint: 'El topo martillea y se hunde unos centímetros', motion: 'insight-mole', duration: 6, focus: 'mole' },
+    ],
+  },
+
+  whatIfs: [
+    {
+      id: 'topo',
+      question: 'el topo (HP³) hubiera logrado excavar',
+      imagine:
+        'Con el agarre necesario, el topo habría ido martilleando hasta unos cinco metros de profundidad y habría medido cuánto calor sale del interior de Marte.',
+      reality:
+        'El suelo se apelmazaba y no le daba la fricción que necesitaba. El topo quedó apenas bajo la superficie; su último intento fue de 500 golpes el 9 de enero de 2021 y el fin se anunció el 14 de enero.',
+      science:
+        'Un topo que avanza a golpes solo funciona si el suelo le da fricción. Tilman Spohn, investigador principal del HP³, lo resumió: “We’ve given it everything we’ve got, but Mars and our heroic mole remain incompatible” (“Lo dimos todo, pero Marte y nuestro heroico topo siguen siendo incompatibles”).',
+      sources: [
+        { label: 'JPL — NASA InSight’s “Mole” Ends Its Journey on Mars', url: 'https://www.jpl.nasa.gov/news/nasa-insights-mole-ends-its-journey-on-mars/' },
+        { label: 'JPL — NASA Retires InSight Mars Lander Mission', url: 'https://www.jpl.nasa.gov/news/nasa-retires-insight-mars-lander-mission-after-years-of-science/' },
+      ],
+      focus: 'mole',
+      action: 'mole',
     },
   ],
 

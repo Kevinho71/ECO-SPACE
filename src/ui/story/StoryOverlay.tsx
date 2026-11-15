@@ -4,7 +4,9 @@ import { getStory, storyControls } from '../../story/StoryDirector'
 import { storyRuntime } from '../../story/runtime'
 import { HOTSPOTS } from '../../data/hotspots'
 import { DEFAULT_STORY_TEXTS, type Story, type StoryTexts } from '../../data/story'
-
+import { ExplorePanel } from './ExplorePanel'
+import { ViewToggle } from './ViewToggle'
+import { DriveBar } from './DriveBar'
 const GLASS = 'bg-slate-950/70 backdrop-blur-md border border-white/15'
 
 /** Textos de las pantallas de esta historia (los que no defina, los de Opportunity). */
@@ -144,6 +146,14 @@ function Card() {
   )
 }
 
+/** Segundo del capítulo bajo el puntero (según su posición en la barra) → salta ahí. */
+function seekFromPointer(e: React.PointerEvent<HTMLButtonElement>, chapter: number, duration: number) {
+  const r = e.currentTarget.getBoundingClientRect()
+  const frac = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
+  // Nunca exactamente al final: eso saltaría al capítulo siguiente.
+  storyControls.seek(chapter, Math.min(duration - 0.1, frac * duration))
+}
+
 /** Línea de tiempo por capítulos (con marcas de sub-escenas) y controles. */
 function Timeline({ story }: { story: Story }) {
   const idx = useAppStore((s) => s.currentChapterIndex)
@@ -171,9 +181,24 @@ function Timeline({ story }: { story: Story }) {
             return (
               <button
                 key={c.id}
-                onClick={() => storyControls.seekChapter(i)}
-                title={c.title}
-                className="group relative text-left"
+                // Clic o arrastre sobre la barra = ir a ese segundo del capítulo.
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId)
+                  seekFromPointer(e, i, c.duration)
+                }}
+                onPointerMove={(e) => {
+                  if (e.buttons & 1) seekFromPointer(e, i, c.duration)
+                }}
+                // Teclado: ←/→ ±5 s dentro del capítulo (Intro/Enter no hacen nada especial).
+                onKeyDown={(e) => {
+                  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+                  e.preventDefault()
+                  const cur = i === idx ? storyRuntime.t : 0
+                  const next = Math.min(c.duration - 0.1, Math.max(0, cur + (e.key === 'ArrowRight' ? 5 : -5)))
+                  storyControls.seek(i, next)
+                }}
+                title={`${c.title} · clic o arrastra para moverte`}
+                className="group relative cursor-pointer touch-none text-left"
                 style={{ width: `${(c.duration / total) * 100}%` }}
               >
                 <div className="relative h-2 overflow-hidden rounded-full bg-white/15 group-hover:bg-white/25">
@@ -202,6 +227,7 @@ function Timeline({ story }: { story: Story }) {
             <IconBtn label="Empezar de nuevo" onClick={() => storyControls.restart()}>↺</IconBtn>
           </div>
           <div className="flex items-center gap-2">
+            <ViewToggle />
             <IconBtn label="Subtítulos" active={subs} onClick={() => patch({ subtitlesOn: !subs })}>CC</IconBtn>
             <IconBtn label="Sonido" active={sound} onClick={() => patch({ soundOn: !sound })}>{sound ? '🔊' : '🔇'}</IconBtn>
             <IconBtn label="Reducir estática y vibración" active={reduce} onClick={() => patch({ reduceEffects: !reduce })}>≋</IconBtn>
@@ -252,6 +278,7 @@ function ExploreHint({ story }: { story: Story }) {
 function EndScreen({ story }: { story: Story }) {
   const backToPlanet = useAppStore((s) => s.backToPlanet)
   const t = story.transparency
+  const drive = story.explore?.drive
   return (
     <div className="pointer-events-auto absolute inset-0 z-[17] flex items-center justify-center bg-black/85 px-6">
       <div className={`${GLASS} max-w-xl rounded-2xl p-7`}>
@@ -266,6 +293,15 @@ function EndScreen({ story }: { story: Story }) {
           ))}
         </ul>
         <div className="mt-6 flex flex-wrap gap-3">
+          {drive ? (
+            <button onClick={() => storyControls.startDrive()} className="rounded-full border border-cyan-300/60 bg-cyan-400/10 px-5 py-2 text-sm text-cyan-100 transition hover:bg-cyan-400/20">
+              {drive.label}
+            </button>
+          ) : (
+            <button onClick={() => storyControls.exploreAfterEnd()} className="rounded-full border border-cyan-300/60 bg-cyan-400/10 px-5 py-2 text-sm text-cyan-100 transition hover:bg-cyan-400/20">
+              {textsOf(story).exploreLabel}
+            </button>
+          )}
           <button onClick={() => storyControls.restart()} className="rounded-full border border-white/30 px-5 py-2 text-sm text-white transition hover:bg-white/10">
             ↺ Volver a vivirla
           </button>
@@ -282,22 +318,29 @@ export function StoryOverlay({ missionId }: { missionId: string }) {
   const story = getStory(missionId)
   const started = useAppStore((s) => s.storyStarted)
   const ended = useAppStore((s) => s.storyEnded)
+  const mode = useAppStore((s) => s.cameraMode)
   if (!story) return null
   return (
     <>
       {!started && <StartScreen story={story} />}
       {started && (
         <>
-          <ChapterBanner story={story} />
-          <Subtitles story={story} />
-          <Card />
-          <PartCallout missionId={missionId} />
-          <ExploreHint story={story} />
-          <Inspector missionId={missionId} />
-          <Timeline story={story} />
+          {mode !== 'drive' && (
+            <>
+              <ChapterBanner story={story} />
+              <Subtitles story={story} />
+              <Card />
+              <PartCallout missionId={missionId} />
+              <ExploreHint story={story} />
+              <ExplorePanel story={story} />
+              <Inspector missionId={missionId} />
+              <Timeline story={story} />
+            </>
+          )}
+          <DriveBar story={story} />
         </>
       )}
-      {ended && <EndScreen story={story} />}
+      {ended && mode === 'guided' && <EndScreen story={story} />}
     </>
   )
 }

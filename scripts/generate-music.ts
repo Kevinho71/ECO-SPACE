@@ -20,6 +20,8 @@ const TRACKS: Record<string, string> = {
   viaje: BASE + 'The journey: slow-building suspense, deep low strings and sustained drones, distant pulsing texture, vast and lonely, a sense of motion through emptiness.',
   mision: BASE + 'The mission at work: calm, hopeful and determined, minimalist repeating piano and warm pulsing synth arpeggio, light strings, steady and focused.',
   final: BASE + 'The end approaches: melancholic and fading, sparse sorrowful piano and slowly dying strings, long reverb, quiet, bittersweet and emotional.',
+  // Menú principal (sistema solar y catálogo): invita a explorar; algo más abierto y luminoso que las pistas de capítulo.
+  menu: BASE + 'Main menu theme: slow, open and contemplative, soft evolving synth pads with a few sparse glassy piano notes and distant shimmering textures, a sense of wonder and quiet curiosity before a journey, gently luminous, easy to listen to for a long time.',
   legado: BASE + 'Legacy and memory: serene, reverent and hopeful, warm sustained strings and soft choir-like pads, slow luminous resolution, peaceful and grateful.',
 }
 
