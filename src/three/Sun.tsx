@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { getSolarTextures } from './lib/solarTextures'
+import { useTexture } from '@react-three/drei'
 
 // El Sol usa una imagen REAL del Solar Dynamics Observatory (NASA/SDO): luz visible (HMI)
 // combinada con la estructura magnética de AIA 193 (ver blender/prep_sun.py).
@@ -34,11 +34,14 @@ function makeCoronaTexture(): THREE.CanvasTexture {
 }
 
 export function SunBody({ radius = 1.4, position = [0, 0, 0] as [number, number, number] }) {
-  const { sun } = getSolarTextures()
+  // Carga directa (suspende hasta estar lista): así nunca se queda sin textura.
+  const sun = useTexture('/textures/sun.jpg')
+  sun.colorSpace = THREE.SRGBColorSpace
+  sun.anisotropy = 8
   const corona = useMemo(makeCoronaTexture, [])
   const billboard = useRef<THREE.Group>(null)
   const coronaMesh = useRef<THREE.Mesh>(null)
-  const bright = useMemo(() => new THREE.Color().setScalar(1.2), [])
+  const bright = useMemo(() => new THREE.Color().setScalar(1.15), [])
 
   useFrame(({ camera, clock }) => {
     billboard.current?.quaternion.copy(camera.quaternion)
@@ -53,7 +56,7 @@ export function SunBody({ radius = 1.4, position = [0, 0, 0] as [number, number,
       {/* Oculta lo que quede detrás del Sol */}
       <mesh>
         <sphereGeometry args={[radius * 0.995, 32, 32]} />
-        <meshBasicMaterial color="#000000" />
+        <meshBasicMaterial color="#7a2f0a" />
       </mesh>
       <group ref={billboard}>
         <mesh ref={coronaMesh} position={[0, 0, radius * 0.9]} renderOrder={1}>

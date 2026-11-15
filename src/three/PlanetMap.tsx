@@ -155,14 +155,14 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
     <>
       <color attach="background" args={['#04050a']} />
       <Stars radius={120} depth={60} count={3000} factor={4} saturation={0} fade speed={0.3} />
-      <ambientLight intensity={isMoon ? 0.25 : 0.45} />
+      <ambientLight intensity={isMoon ? 0.55 : 0.7} />
       <directionalLight position={[10, 6, 8]} intensity={isMoon ? 2.5 : 2} color={isMoon ? '#fff3e0' : '#ffd9b0'} />
 
       <CameraDolly from={plan.from} to={plan.to} target={plan.target} onDone={() => setReady(true)} />
 
       <mesh>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
-        <meshStandardMaterial map={map} roughness={0.95} metalness={0} />
+        <meshStandardMaterial map={map} roughness={0.95} metalness={0} emissive="#ffffff" emissiveMap={map} emissiveIntensity={0.22} />
       </mesh>
 
       {!isMoon && (

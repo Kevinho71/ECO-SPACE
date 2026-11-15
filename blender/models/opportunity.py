@@ -26,8 +26,8 @@ def build():
     # 6 ruedas con brazos de suspensión (rocker-bogie simplificado)
     for i, x in enumerate((-0.58, 0.0, 0.58)):
         lab = "RMF"[i]
-        for side, y in (("L", -0.66), ("R", 0.66)):
-            sgn = -1 if side == "L" else 1
+        for side, y in (("L", 0.66), ("R", -0.66)):  # mirando a +X: izquierda = +Y, derecha = -Y
+            sgn = 1 if side == "L" else -1
             rh.add_rod("susp_%s%s" % (side, lab), 0.035, (x, sgn * 0.42, 0.50), (x, sgn * 0.62, 0.20),
                        material=P["grey"], parent=root)
             piv = rh.add_empty("wheel_%s%s" % (side, lab), (x, y, 0.17), parent=root)
@@ -37,7 +37,7 @@ def build():
                             rotation=(PI / 2, 0, 0), material=P["kevlar"], parent=piv, segments=10)
 
     # Paneles solares laterales plegables (alas)
-    for side, sgn in (("L", -1), ("R", 1)):
+    for side, sgn in (("L", 1), ("R", -1)):
         piv = rh.add_empty("panel_%s" % side, (0.0, sgn * 0.50, 0.80), parent=root)
         rh.add_rbox("panel_%s_mesh" % side, (1.2, 0.5, 0.035), (0, sgn * 0.25, 0.0),
                     material=P["solar"], parent=piv, radius=0.015)

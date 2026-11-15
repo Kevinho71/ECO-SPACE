@@ -98,7 +98,7 @@ function Planet({
       >
         <sphereGeometry args={[radius, 48, 48]} />
         {map ? (
-          <meshStandardMaterial map={map} roughness={0.9} metalness={0} />
+          <meshStandardMaterial map={map} roughness={0.9} metalness={0} emissive="#ffffff" emissiveMap={map} emissiveIntensity={0.32} />
         ) : (
           <meshStandardMaterial color="#cccccc" roughness={0.9} />
         )}
@@ -240,8 +240,8 @@ export function SolarMap() {
   return (
     <>
       <color attach="background" args={['#03040a']} />
-      <ambientLight intensity={0.25} />
-      <pointLight position={[0, 0, 0]} intensity={3.5} decay={0} color="#fff4e0" />
+      <ambientLight intensity={0.85} color="#cfd8ff" />
+      <pointLight position={[0, 0, 0]} intensity={14} decay={0} color="#fff1d6" />
       <Stars radius={160} depth={80} count={5000} factor={4} saturation={0} fade speed={0.3} />
 
       <SceneCamera position={[0, 12, 26]} target={[0, 0, 0]} />
