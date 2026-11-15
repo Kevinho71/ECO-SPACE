@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { INTRO_SEEN_KEY, TOUR_SEEN_KEY, prefersReducedMotion, readFlag, writeFlag } from '../lib/prefs'
-import { HeartbeatIntro } from './HeartbeatIntro'
+import { ZoomRoverIntro } from './ZoomRoverIntro'
 
 const LEAVE_MS = 500
-const RETURNING_AUTO_MS = 2600
 
 /**
- * Portada.
- *  - Primera visita: frase gancho y botón "Explorar". No avanza sola. Al entrar empieza el recorrido guiado.
- *  - Visitas siguientes: solo el título, que se desvanece solo (o con un clic / tecla).
- * El sistema solar se ve detrás, a través de un velo translúcido.
+ * Portada: intro interactiva (vuelo hasta Opportunity), frase gancho y botón "Explorar".
+ * Se muestra en todas las visitas; se puede saltar con "Saltar intro" o con Intro.
+ * Al entrar empieza el recorrido guiado si aún no se ha visto.
  */
 export function Splash() {
   const setStage = useAppStore((s) => s.setStage)
   const setTourStep = useAppStore((s) => s.setTourStep)
-  const [returning] = useState(() => readFlag(INTRO_SEEN_KEY))
   const [leaving, setLeaving] = useState(false)
   const [showCta, setShowCta] = useState(false)
   const left = useRef(false)
@@ -32,13 +29,6 @@ export function Splash() {
     }, LEAVE_MS)
   }, [setStage, setTourStep])
 
-  // Visitante que vuelve: avanza solo.
-  useEffect(() => {
-    if (!returning) return
-    const t = setTimeout(enter, RETURNING_AUTO_MS)
-    return () => clearTimeout(t)
-  }, [returning, enter])
-
   // Teclado: Intro, Espacio o Escape para entrar.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -52,23 +42,10 @@ export function Splash() {
   }, [enter])
 
   useEffect(() => {
-    if (!returning && showCta) buttonRef.current?.focus({ preventScroll: true })
-  }, [returning, showCta])
+    if (showCta) buttonRef.current?.focus({ preventScroll: true })
+  }, [showCta])
 
   const fade = `transition-opacity duration-500 ${leaving ? 'opacity-0' : 'opacity-100'}`
-
-  if (returning) {
-    return (
-      <div
-        onClick={enter}
-        className={`absolute inset-0 z-40 flex cursor-pointer flex-col items-center justify-center bg-[#02040a]/80 ${fade}`}
-      >
-        <h1 className="splash-tracking text-5xl font-semibold text-white md:text-7xl">ECOSPACE</h1>
-        <p className="mt-4 text-sm uppercase tracking-[0.35em] text-slate-400">Abandoned but not Forgotten</p>
-        <p className="mt-10 text-xs text-slate-500">Clic o Intro para continuar</p>
-      </div>
-    )
-  }
 
   return (
     <div
@@ -77,31 +54,50 @@ export function Splash() {
       <h1 className="splash-tracking text-3xl font-semibold text-white md:text-5xl">ECOSPACE</h1>
       <p className="mt-3 text-xs uppercase tracking-[0.35em] text-slate-400 md:text-sm">Abandoned but not Forgotten</p>
 
-      <div className="mt-8 flex w-full justify-center">
-        <HeartbeatIntro onDone={() => setShowCta(true)} />
-      </div>
-
       {showCta ? (
         <>
-          <p className="subtitle-in mt-6 max-w-xl text-lg leading-relaxed text-slate-100 md:text-2xl">
-            Hay robots que siguen ahí fuera, en la Luna, en Marte y más allá.
+          <p className="subtitle-in mt-10 max-w-2xl text-xl font-semibold leading-relaxed tracking-[0.08em] text-slate-100 md:text-3xl">
+            Hace décadas dejamos robots en la Luna, en Marte y en el espacio profundo.
             <br />
-            <span className="text-slate-300">Cada uno dejó de latir un día. Nadie te ha contado cómo.</span>
+            <span className="text-cyan-200">Ya no responden.</span>
           </p>
+
+          <p className="subtitle-in mt-5 max-w-xl text-sm leading-relaxed tracking-[0.06em] text-slate-300 md:text-base" style={{ animationDelay: '0.5s' }}>
+            EcoSpace te lleva hasta ellos para descubrir qué hicieron y qué le enseñaron a la humanidad.
+          </p>
+
+          <ol className="subtitle-in mt-8 grid w-full max-w-2xl gap-3 text-left text-xs tracking-[0.06em] text-slate-300 md:grid-cols-3 md:text-sm" style={{ animationDelay: '1s' }}>
+            {[
+              ['1', 'Elige un mundo', 'en el mapa del sistema solar.'],
+              ['2', 'Visita su robot', 'y mira dónde quedó abandonado.'],
+              ['3', 'Vive su historia', 'con datos reales de la NASA.'],
+            ].map(([n, title, text]) => (
+              <li key={n} className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+                <span className="text-cyan-300">{n}</span> <span className="font-semibold text-white">{title}</span>
+                <br />
+                {text}
+              </li>
+            ))}
+          </ol>
 
           <button
             ref={buttonRef}
             onClick={enter}
             className="subtitle-in mt-8 rounded-full border border-cyan-300/60 bg-cyan-400/10 px-8 py-3 text-base font-medium text-cyan-100 shadow-[0_0_30px_rgba(110,247,255,0.2)] transition hover:bg-cyan-400/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 md:text-lg"
-            style={{ animationDelay: '0.6s' }}
+            style={{ animationDelay: '1.5s' }}
           >
             Explorar el cementerio de las estrellas
           </button>
         </>
       ) : (
-        <button onClick={enter} className="mt-6 text-xs text-slate-600 hover:text-slate-400">
-          Saltar intro
-        </button>
+        <>
+          <div className="mt-8 flex w-full justify-center">
+            <ZoomRoverIntro onDone={() => setShowCta(true)} />
+          </div>
+          <button onClick={enter} className="mt-6 text-xs text-slate-600 hover:text-slate-400">
+            Saltar intro
+          </button>
+        </>
       )}
     </div>
   )
