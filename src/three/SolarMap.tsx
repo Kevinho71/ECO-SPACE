@@ -1,15 +1,19 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html, OrbitControls, Stars, useCursor } from '@react-three/drei'
 import * as THREE from 'three'
 import { useAppStore, type LocationId } from '../store/useAppStore'
 import { SceneCamera } from './SceneCamera'
+import { FlyTo } from './FlyTo'
 import { getSolarTextures } from './lib/solarTextures'
 
 // ---------------------------------------------------------------------------
 // Sistema solar realista y rotable. Los destinos con robot (Luna, Marte y la
-// baliza "Más allá") se resaltan con un halo luminoso pulsante.
+// baliza "Más allá") se resaltan con un halo luminoso y, al pulsarlos, la
+// cámara vuela hacia ellos antes de entrar al globo planetario.
 // ---------------------------------------------------------------------------
+
+const LABEL_STYLE: React.CSSProperties = { textShadow: '0 1px 5px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)' }
 
 function Sun() {
   return (
@@ -30,19 +34,27 @@ function Orbiter({
   radius,
   speed,
   phase = 0,
+  groupRef,
   children,
 }: {
   radius: number
   speed: number
   phase?: number
+  groupRef?: { current: THREE.Group | null } | null
   children: React.ReactNode
 }) {
-  const ref = useRef<THREE.Group>(null)
+  const local = useRef<THREE.Group>(null)
   useFrame(({ clock }) => {
     const a = phase + clock.elapsedTime * speed
-    ref.current?.position.set(Math.cos(a) * radius, 0, Math.sin(a) * radius)
+    local.current?.position.set(Math.cos(a) * radius, 0, Math.sin(a) * radius)
   })
-  return <group ref={ref}>{children}</group>
+  useEffect(() => {
+    if (groupRef) groupRef.current = local.current
+    return () => {
+      if (groupRef) groupRef.current = null
+    }
+  }, [groupRef])
+  return <group ref={local}>{children}</group>
 }
 
 function OrbitRing({ radius }: { radius: number }) {
@@ -106,7 +118,6 @@ function Planet({
         )}
       </mesh>
 
-      {/* Halo luminoso para los destinos que tienen robots */}
       {selectable && (
         <mesh ref={halo}>
           <sphereGeometry args={[radius * 1.45, 32, 32]} />
@@ -121,8 +132,8 @@ function Planet({
         </mesh>
       )}
       {label && (
-        <Html center distanceFactor={12} position={[0, radius + 0.35, 0]}>
-          <div className="pointer-events-none select-none whitespace-nowrap rounded-full border border-white/15 bg-slate-950/60 px-3 py-1 text-sm text-slate-200 backdrop-blur-md">
+        <Html center distanceFactor={12} position={[0, radius + 0.35, 0]} style={{ pointerEvents: 'none' }}>
+          <div className="select-none whitespace-nowrap text-xs font-medium text-white" style={LABEL_STYLE}>
             {label}
           </div>
         </Html>
@@ -210,9 +221,9 @@ function BeyondBeacon({ onSelect }: { onSelect: (id: LocationId) => void }) {
           <meshBasicMaterial color="#ffffff" transparent opacity={0.2} />
         </mesh>
       )}
-      <Html center distanceFactor={12} position={[0, 0.7, 0]}>
-        <div className="pointer-events-none select-none whitespace-nowrap rounded-full border border-white/15 bg-slate-950/60 px-3 py-1 text-sm text-slate-200 backdrop-blur-md">
-          🪐 Más allá
+      <Html center distanceFactor={12} position={[0, 0.7, 0]} style={{ pointerEvents: 'none' }}>
+        <div className="select-none whitespace-nowrap text-xs font-medium text-white" style={LABEL_STYLE}>
+          Más allá
         </div>
       </Html>
     </group>
@@ -222,6 +233,22 @@ function BeyondBeacon({ onSelect }: { onSelect: (id: LocationId) => void }) {
 export function SolarMap() {
   const selectLocation = useAppStore((s) => s.selectLocation)
   const tex = getSolarTextures()
+
+  const moonRef = useRef<THREE.Group>(null)
+  const marsRef = useRef<THREE.Group>(null)
+  const beyondRef = useRef<THREE.Group>(null)
+  const [fly, setFly] = useState<{ target: THREE.Vector3; distance: number; id: LocationId } | null>(null)
+
+  const flyTo = (ref: { current: THREE.Group | null }, id: LocationId, distance: number) => {
+    const g = ref.current
+    if (!g) {
+      selectLocation(id)
+      return
+    }
+    const pos = new THREE.Vector3()
+    g.getWorldPosition(pos)
+    setFly({ target: pos, distance, id })
+  }
 
   return (
     <>
@@ -244,14 +271,14 @@ export function SolarMap() {
       </Orbiter>
       <Orbiter radius={4.4} speed={0.2}>
         <OrbitRing radius={4.4} />
-        <Planet radius={0.3} map={tex.earth} label="🌍 Tierra" selfRotation={0.4} />
-        <Orbiter radius={0.55} speed={1.2}>
-          <Planet radius={0.1} map={tex.moon} label="🌕 Luna" selectable id="moon" onSelect={selectLocation} selfRotation={0.2} />
+        <Planet radius={0.3} map={tex.earth} label="Tierra" selfRotation={0.4} />
+        <Orbiter groupRef={moonRef} radius={0.55} speed={1.2}>
+          <Planet radius={0.1} map={tex.moon} label="Luna" selectable id="moon" onSelect={(id) => flyTo(moonRef, id, 0.5)} selfRotation={0.2} />
         </Orbiter>
       </Orbiter>
-      <Orbiter radius={5.8} speed={0.16}>
+      <Orbiter groupRef={marsRef} radius={5.8} speed={0.16}>
         <OrbitRing radius={5.8} />
-        <Planet radius={0.24} map={tex.mars} label="🔴 Marte" selectable id="mars" onSelect={selectLocation} selfRotation={0.35} />
+        <Planet radius={0.24} map={tex.mars} label="Marte" selectable id="mars" onSelect={(id) => flyTo(marsRef, id, 1.4)} selfRotation={0.35} />
       </Orbiter>
 
       <AsteroidBelt />
@@ -275,10 +302,21 @@ export function SolarMap() {
         <OrbitRing radius={15.5} />
         <Planet radius={0.48} map={tex.neptune} selfRotation={0.4} tilt={0.5} />
       </Orbiter>
-      <Orbiter radius={17.5} speed={0.04}>
+      <Orbiter groupRef={beyondRef} radius={17.5} speed={0.04}>
         <OrbitRing radius={17.5} />
-        <BeyondBeacon onSelect={selectLocation} />
+        <BeyondBeacon onSelect={(id) => flyTo(beyondRef, id, 1.2)} />
       </Orbiter>
+
+      {fly && (
+        <FlyTo
+          target={fly.target}
+          approachDistance={fly.distance}
+          onArrive={() => {
+            selectLocation(fly.id)
+            setFly(null)
+          }}
+        />
+      )}
 
       <OrbitControls
         makeDefault

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type ViewStage = 'cover' | 'solar-map' | 'planet-map' | 'mission-scene'
+export type ViewStage = 'splash' | 'solar-map' | 'planet-map' | 'mission-scene'
 export type LocationId = 'moon' | 'mars' | 'beyond'
 export type CameraMode = 'guided' | 'free'
 
@@ -31,7 +31,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  stage: 'cover',
+  stage: 'splash',
   selectedLocation: null,
   selectedMissionId: null,
   currentChapterIndex: 0,

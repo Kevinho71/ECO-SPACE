@@ -4,9 +4,12 @@ import { Html, OrbitControls, Sparkles, Stars, useCursor } from '@react-three/dr
 import * as THREE from 'three'
 import { useAppStore } from '../store/useAppStore'
 import { MISSIONS } from '../data/catalog'
+import { FlyTo } from './FlyTo'
 import { getSolarTextures } from './lib/solarTextures'
 
 const PLANET_RADIUS = 3
+
+const LABEL_STYLE: React.CSSProperties = { textShadow: '0 1px 5px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)' }
 
 function latLonToPosition(lat: number, lon: number, radius: number): [number, number, number] {
   const phi = (lat * Math.PI) / 180
@@ -97,8 +100,8 @@ function Beacon({
           <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
         </mesh>
       )}
-      <Html center distanceFactor={12} position={[0, 0.2, 0]}>
-        <div className="pointer-events-none select-none whitespace-nowrap rounded-full border border-white/15 bg-slate-950/70 px-3 py-1 text-sm text-white backdrop-blur-md">
+      <Html center distanceFactor={12} position={[0, 0.2, 0]} style={{ pointerEvents: 'none' }}>
+        <div className="select-none whitespace-nowrap text-xs font-medium text-white" style={LABEL_STYLE}>
           {label}
         </div>
       </Html>
@@ -114,6 +117,7 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
   const map = isMoon ? tex.moon : tex.mars
   const missions = MISSIONS.filter((m) => m.location === location && m.latlon)
   const [ready, setReady] = useState(false)
+  const [fly, setFly] = useState<{ target: THREE.Vector3; missionId: string } | null>(null)
 
   return (
     <>
@@ -136,14 +140,28 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
         </mesh>
       )}
 
-      {missions.map((m) => (
-        <Beacon
-          key={m.id}
-          position={latLonToPosition(m.latlon![0], m.latlon![1], PLANET_RADIUS * 1.015)}
-          label={m.nickname ?? m.name}
-          onClick={() => selectMission(m.id)}
+      {missions.map((m) => {
+        const pos = latLonToPosition(m.latlon![0], m.latlon![1], PLANET_RADIUS * 1.015)
+        return (
+          <Beacon
+            key={m.id}
+            position={pos}
+            label={m.nickname ?? m.name}
+            onClick={() => setFly({ target: new THREE.Vector3(...pos), missionId: m.id })}
+          />
+        )
+      })}
+
+      {fly && (
+        <FlyTo
+          target={fly.target}
+          approachDistance={1.6}
+          onArrive={() => {
+            selectMission(fly.missionId)
+            setFly(null)
+          }}
         />
-      ))}
+      )}
 
       <OrbitControls
         makeDefault
@@ -163,6 +181,7 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
 function BeyondMap() {
   const selectMission = useAppStore((s) => s.selectMission)
   const [ready, setReady] = useState(false)
+  const [fly, setFly] = useState<{ target: THREE.Vector3; missionId: string } | null>(null)
 
   return (
     <>
@@ -174,7 +193,23 @@ function BeyondMap() {
 
       <CameraDolly from={[0, 6, 20]} to={[0, 0, 8]} target={[0, 0, 0]} onDone={() => setReady(true)} />
 
-      <Beacon position={[0, 0, 0]} label="🛰️ Pioneer 10" color="#6ef7ff" onClick={() => selectMission('pioneer10')} />
+      <Beacon
+        position={[0, 0, 0]}
+        label="Pioneer 10"
+        color="#6ef7ff"
+        onClick={() => setFly({ target: new THREE.Vector3(0, 0, 0), missionId: 'pioneer10' })}
+      />
+
+      {fly && (
+        <FlyTo
+          target={fly.target}
+          approachDistance={1.6}
+          onArrive={() => {
+            selectMission(fly.missionId)
+            setFly(null)
+          }}
+        />
+      )}
 
       <OrbitControls
         makeDefault

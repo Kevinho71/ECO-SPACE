@@ -14,3 +14,38 @@ body {
   overflow: hidden;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Portada "ECOSPACE": aparece, se mantiene y se desvanece. */
+@keyframes splashFade {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.splash-fade {
+  animation: splashFade 2.6s ease-in-out forwards;
+}
+
+@keyframes splashTracking {
+  from {
+    letter-spacing: 0.2em;
+    opacity: 0;
+  }
+  to {
+    letter-spacing: 0.55em;
+    opacity: 1;
+  }
+}
+
+.splash-tracking {
+  animation: splashTracking 1.2s ease-out forwards;
+}

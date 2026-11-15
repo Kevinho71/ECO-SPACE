@@ -6,6 +6,7 @@ import { PlanetMap } from './three/PlanetMap'
 import { MissionScene } from './three/MissionScene'
 import { Effects } from './three/Effects'
 import { Overlay } from './ui/Overlay'
+import { Splash } from './ui/Splash'
 
 export default function App() {
   const stage = useAppStore((s) => s.stage)
@@ -25,6 +26,7 @@ export default function App() {
         <Effects />
       </Canvas>
       <Overlay />
+      {stage === 'splash' && <Splash />}
     </div>
   )
 }
