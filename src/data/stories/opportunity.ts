@@ -214,138 +214,147 @@ export const opportunityStory: Story = {
     },
 
     // -----------------------------------------------------------------------
-    // 3 · LA MISIÓN (3 escenas)
+    // 3 · LA MISIÓN (3 escenas, ~104 s)
     // -----------------------------------------------------------------------
     {
       id: 'mision',
       title: 'Capítulo 3 · La misión',
       subtitle: 'Cráter Eagle → Purgatory Dune → Endeavour · 2004–2015',
-      duration: 158,
+      duration: 104,
       audioKey: 'mars/opportunity_03.mp3',
       place0: 'eagle',
       jumps: [
-        { t: 47.6, to: 'purgatory' },
-        { t: 97.6, to: 'plains' },
-        { t: 103.7, to: 'endurance' },
-        { t: 109.7, to: 'victoria' },
-        { t: 113.7, to: 'endeavour' },
+        { t: 33.6, to: 'purgatory' },
+        { t: 63.6, to: 'plains' },
+        { t: 69.7, to: 'endurance' },
+        { t: 74.7, to: 'victoria' },
+        { t: 80.7, to: 'endeavour' },
       ],
       marks: [
         { t: 0, label: 'Las esferas · 2004' },
-        { t: 48, label: 'Atrapado en la arena · 2005' },
-        { t: 98, label: 'El camino largo · 2006–2015' },
+        { t: 34, label: 'Atrapado en la arena · 2005' },
+        { t: 64, label: 'El camino largo · 2006–2015' },
       ],
       cues: [
         // 3A
         { t: 0, text: 'Acerco mi brazo a la roca y la miro con mi microscopio.' },
         {
-          t: 6,
-          text: 'Hay capas finas, como las páginas de un libro. Y por el suelo, esferitas diminutas, regadas como arándanos.',
+          t: 5,
+          text: 'Hay capas finas, como las páginas de un libro. Y por el suelo, esferitas regadas como arándanos.',
         },
-        { t: 15, text: 'Los científicos les ponen un apodo: blueberries. Son bolitas de hematita.' },
-        { t: 21, text: 'Se formaron cuando agua subterránea ácida empapó la roca.' },
-        { t: 28, text: 'Me enviaron a buscar pruebas de agua. Las acabo de encontrar.' },
-        { t: 34, text: 'Soy el primer rover que estudia rocas sedimentarias en otro planeta.' },
-        { t: 41, text: 'Mi misión de noventa soles… apenas empieza.' },
-        // 3B
-        { t: 48, text: 'Veintiséis de abril de 2005. Mis ruedas se hunden en una duna de arena suelta.' },
-        { t: 56, text: 'Giro y giro… y no avanzo.' },
         {
-          t: 60,
+          t: 13,
+          text: 'Los científicos las llaman blueberries. Son bolitas de hematita, formadas cuando agua subterránea ácida empapó la roca.',
+        },
+        { t: 22, text: 'Me enviaron a buscar pruebas de agua. Las acabo de encontrar.' },
+        { t: 28, text: 'Soy el primer rover que estudia rocas sedimentarias en otro planeta.' },
+        // 3B
+        {
+          t: 34,
+          text: 'Veintiséis de abril de 2005. Mis ruedas se hunden en una duna de arena suelta. Giro y giro… y no avanzo.',
+        },
+        {
+          t: 43,
           text: 'Pasan cinco semanas. En la Tierra, mis ingenieros copian mi situación en un cajón de arena del JPL y ensayan cómo sacarme.',
         },
-        { t: 71, text: 'Llegan sus órdenes. Mis ruedas giran despacio, despacio… y salgo.' },
+        { t: 52, text: 'Llegan sus órdenes. Mis ruedas giran despacio… y salgo.' },
         {
-          t: 78,
-          text: 'Desde entonces cuido mis ruedas. La delantera derecha gasta más energía de la cuenta, así que a veces avanzo… de reversa.',
+          t: 57,
+          text: 'La rueda delantera derecha gasta más energía de la cuenta, así que a veces avanzo… de reversa.',
         },
-        { t: 88, text: 'Y cuando el viento limpia mis paneles, es como un regalo: vuelve la luz.' },
         // 3C
-        { t: 98, text: 'Me pidieron recorrer mil metros. Sigo andando.' },
-        { t: 104, text: 'Bajo por las pendientes inclinadas de un cráter llamado Endurance.' },
-        { t: 110, text: 'Exploro el cráter Victoria durante casi dos años.' },
+        { t: 64, text: 'Me pidieron recorrer mil metros. Sigo andando.' },
+        { t: 70, text: 'Bajo por las pendientes inclinadas del cráter Endurance.' },
+        { t: 75, text: 'Exploro el cráter Victoria durante casi dos años.' },
         {
-          t: 114,
-          text: 'En 2011 llego a otro cráter, Endeavour. Allí encuentro vetas de yeso y arcillas que se formaron en agua ni ácida ni básica: agua de pH neutro.',
+          t: 81,
+          text: 'En 2011 llego a Endeavour. Allí hay vetas de yeso y arcillas formadas en agua de pH neutro: las condiciones más amigables para la vida microbiana antigua.',
         },
         {
-          t: 126,
-          text: 'Los científicos dicen que ese lugar tuvo las condiciones más amigables para la vida microbiana antigua.',
+          t: 93,
+          text: 'Veinticuatro de marzo de 2015, sol 3 968: mi cuenta pasa los cuarenta y dos con ciento noventa y cinco metros. Es la distancia de un maratón.',
         },
-        {
-          t: 134,
-          text: 'Veinticuatro de marzo de 2015, sol 3 968: mi cuenta de kilómetros pasa los cuarenta y dos con ciento noventa y cinco metros. Es la distancia de un maratón.',
-        },
-        { t: 146, text: 'En el JPL, mi equipo planea correr esa misma distancia en relevos, para celebrarlo conmigo.' },
       ],
       camera: [
-        { t: 0, v: 'pov' },
-        { t: 56, v: 'wide' }, // se ven las ruedas hundidas
-        { t: 70, v: 'pov' },
-        { t: 121, v: 'wide' }, // el rover rodando por el borde de Endeavour
-        { t: 132, v: 'pov' },
+        { t: 0, v: 'part' }, // arranca mirando el brazo sobre la roca
+        { t: 6, v: 'pov' },
+        { t: 38, v: 'wide' }, // se ven las ruedas hundidas
+        { t: 50, v: 'pov' },
+        { t: 82, v: 'wide' }, // el rover rodando por el borde de Endeavour
+        { t: 92, v: 'pov' },
+      ],
+      partFocus: [
+        { t: 0, v: { node: 'arm', hotspot: 'none', dist: 2.1, az: -0.3, el: 0.02 } },
+        { t: 6, v: null },
+      ],
+      // La mirada recorre las capas de la roca y las esferas.
+      pan: [
+        { t: 0, v: 0 },
+        { t: 6, v: 0 },
+        { t: 13, v: -0.6 },
+        { t: 26, v: 0.6 },
+        { t: 34, v: 0 },
       ],
       scene: [{ t: 0, v: 'surface' }],
       staticLevel: [
         { t: 0, v: 0.12 },
         { t: 4, v: 0.05 },
-        { t: 158, v: 0.05 },
+        { t: 104, v: 0.05 },
       ],
       // Distancia recorrida en cada lugar (se reinicia con los ojos cerrados). La velocidad es acelerada a propósito
       // para que se note el avance (el rover real iba a menos de 4 cm/s).
       robotX: [
         { t: 0, v: 0 },
-        { t: 71, v: 0 },
-        { t: 80, v: 3 },
-        { t: 97.8, v: 8 },
-        { t: 97.9, v: 0 },
-        { t: 103.7, v: 4.5 },
-        { t: 103.95, v: 4.5 },
-        { t: 104, v: 0 },
-        { t: 109.7, v: 4.5 },
-        { t: 109.95, v: 4.5 },
-        { t: 110, v: 0 },
-        { t: 113.7, v: 3 },
-        { t: 113.95, v: 3 },
-        { t: 114, v: 0 },
-        { t: 154, v: 30 },
-        { t: 158, v: 32 },
+        { t: 52, v: 0 },
+        { t: 62, v: 4 },
+        { t: 63.85, v: 4.6 },
+        { t: 63.9, v: 0 },
+        { t: 69.7, v: 3.5 },
+        { t: 69.95, v: 3.5 },
+        { t: 70, v: 0 },
+        { t: 74.7, v: 4 },
+        { t: 74.95, v: 4 },
+        { t: 75, v: 0 },
+        { t: 80.7, v: 3 },
+        { t: 80.95, v: 3 },
+        { t: 81, v: 0 },
+        { t: 104, v: 18 },
       ],
       // Atascado en Purgatory Dune: las ruedas se hunden y patinan; luego sale.
       sink: [
         { t: 0, v: 0 },
-        { t: 48, v: 0 },
-        { t: 54, v: 0.16 },
-        { t: 71, v: 0.16 },
-        { t: 78, v: 0 },
+        { t: 34, v: 0 },
+        { t: 38, v: 0.16 },
+        { t: 52, v: 0.16 },
+        { t: 57, v: 0 },
       ],
       slip: [
         { t: 0, v: 0 },
-        { t: 48, v: 0 },
-        { t: 50, v: 1 },
-        { t: 71, v: 1 },
-        { t: 74, v: 0 },
+        { t: 34, v: 0 },
+        { t: 35, v: 1 },
+        { t: 52, v: 1 },
+        { t: 54.5, v: 0 },
       ],
       battery: [{ t: 0, v: 1 }],
       signal: [{ t: 0, v: 1 }],
       clips: [
         { t: 0, v: 'Idle' },
-        { t: 48, v: 'Drive' }, // las ruedas giran sin avanzar (atascado); después avanza
+        { t: 34, v: 'Drive' }, // las ruedas giran sin avanzar (atascado); después avanza
       ],
       expressions: [
         { t: 0, v: null },
-        { t: 28, v: 'Surprised' },
-        { t: 33, v: null },
+        { t: 22, v: 'Surprised' },
+        { t: 27, v: null },
       ],
       hud: [
         { t: 0, v: { date: '2004', place: 'CRÁTER EAGLE · MERIDIANI PLANUM' } },
-        { t: 48, v: { date: '26 ABR 2005', place: 'PURGATORY DUNE' } },
-        { t: 98, v: { date: '2006 → 2015', place: 'CRÁTERES ENDURANCE · VICTORIA · ENDEAVOUR' } },
-        { t: 134, v: { sol: '3 968', date: '24 MAR 2015', place: 'MARATHON VALLEY · 42,195 km' } },
+        { t: 34, v: { date: '26 ABR 2005', place: 'PURGATORY DUNE' } },
+        { t: 64, v: { date: '2006 → 2015', place: 'CRÁTERES ENDURANCE · VICTORIA · ENDEAVOUR' } },
+        { t: 93, v: { sol: '3 968', date: '24 MAR 2015', place: 'MARATHON VALLEY · 42,195 km' } },
       ],
       cards: [
         {
-          at: 34,
+          at: 22,
           dur: 9,
           kind: 'quote',
           text: '“From the get-go, Opportunity delivered on our search for evidence regarding water.”',
@@ -353,8 +362,8 @@ export const opportunityStory: Story = {
           source: 'NASA, 2019',
         },
         {
-          at: 138,
-          dur: 10,
+          at: 95,
+          dur: 8,
           kind: 'quote',
           text: '“Still, running a marathon on Mars feels pretty cool.”',
           author: 'Steve Squyres, investigador principal (Cornell)',
@@ -364,22 +373,23 @@ export const opportunityStory: Story = {
     },
 
     // -----------------------------------------------------------------------
-    // 4 · EL FINAL
+    // 4 · EL FINAL (~62 s)
     // -----------------------------------------------------------------------
     {
       id: 'final',
       title: 'Capítulo 4 · El final',
       subtitle: 'Perseverance Valley · mayo–junio de 2018',
-      duration: 78,
+      duration: 62,
       audioKey: 'mars/opportunity_04.mp3',
       place0: 'endeavour',
       jumps: [{ t: 0.1, to: 'perseverance' }],
-      // Panorámica: la mirada barre el horizonte mientras "toma" las 354 fotos.
+      // Panorámica: la mirada barre el horizonte mientras "toma" las 354 fotos; luego, una deriva lenta.
       pan: [
         { t: 0, v: -1.0 },
-        { t: 8, v: -1.0 },
-        { t: 20, v: 1.0 },
-        { t: 28, v: 0 },
+        { t: 7, v: -1.0 },
+        { t: 16, v: 1.0 },
+        { t: 22, v: 0 },
+        { t: 62, v: 0.3 },
       ],
       cues: [
         {
@@ -387,77 +397,80 @@ export const opportunityStory: Story = {
           text: 'Sol cinco mil ochenta y cuatro. Estoy en Perseverance Valley, en el borde del cráter Endeavour.',
         },
         {
-          t: 8,
+          t: 7,
           text: 'Hago lo que mejor sé hacer: mirar. Tomo un panorama completo, foto a foto: trescientas cincuenta y cuatro imágenes.',
         },
-        { t: 18, text: 'Pero la luz cambia. El Sol se vuelve un disco pálido. El cielo se pone marrón.' },
+        { t: 16, text: 'Pero la luz cambia. El Sol se vuelve un disco pálido. El cielo se pone marrón.' },
         {
-          t: 26,
-          text: 'Desde la órbita, mis colegas ven nacer una tormenta de polvo y avisan a mi equipo. Yo funciono con el Sol: si el Sol se va, me quedo sin batería.',
+          t: 23,
+          text: 'Desde la órbita, mis colegas ven nacer una tormenta de polvo. Yo funciono con el Sol: si el Sol se va, me quedo sin batería.',
         },
         {
-          t: 36,
-          text: 'El seis de junio mi energía cae y paso a funcionar al mínimo. No me alcanza el tiempo para terminar el panorama con todos los filtros: algunas fotos quedarán en blanco y negro.',
+          t: 32,
+          text: 'El seis de junio mi energía cae y paso a funcionar al mínimo. Algunas fotos del panorama quedarán en blanco y negro.',
         },
-        { t: 45, text: 'Diez de junio de 2018. Sol cinco mil ciento once.' },
+        { t: 40, text: 'Diez de junio de 2018. Sol cinco mil ciento once.' },
         {
-          t: 50,
-          text: 'Preparo un último paquete de datos para la Tierra. Dice que casi no me queda energía, que afuera hace unos veintinueve grados bajo cero… y que aquí, en pleno día, es de noche.',
+          t: 44,
+          text: 'Preparo un último paquete de datos para la Tierra: casi no me queda energía, afuera hay unos veintinueve grados bajo cero… y aquí, en pleno día, es de noche.',
         },
-        { t: 61, text: 'Lo envío. Y espero la respuesta.' },
-        { t: 66, text: 'Espero…' },
+        { t: 54, text: 'Lo envío. Y espero la respuesta…' },
       ],
-      camera: [{ t: 0, v: 'pov' }],
+      camera: [
+        { t: 0, v: 'pov' },
+        { t: 24, v: 'wide' }, // se ve al rover bajo el cielo que se oscurece
+        { t: 32, v: 'pov' },
+      ],
       scene: [{ t: 0, v: 'surface' }],
       staticLevel: [
         { t: 0, v: 0.1 },
-        { t: 36, v: 0.2 },
-        { t: 50, v: 0.4 },
-        { t: 61, v: 0.55 },
-        { t: 66, v: 0.7 },
-        { t: 78, v: 0.7 },
+        { t: 32, v: 0.2 },
+        { t: 44, v: 0.4 },
+        { t: 54, v: 0.55 },
+        { t: 58, v: 0.7 },
+        { t: 62, v: 0.7 },
       ],
       dust: [
         { t: 0, v: 0 },
-        { t: 16, v: 0.15 },
-        { t: 26, v: 0.45 },
-        { t: 36, v: 0.65 },
-        { t: 50, v: 0.9 },
-        { t: 66, v: 1 },
-        { t: 78, v: 1 },
+        { t: 14, v: 0.15 },
+        { t: 23, v: 0.45 },
+        { t: 32, v: 0.65 },
+        { t: 44, v: 0.9 },
+        { t: 56, v: 1 },
+        { t: 62, v: 1 },
       ],
       battery: [
         { t: 0, v: 0.85 },
-        { t: 26, v: 0.7 },
-        { t: 36, v: 0.4 },
-        { t: 50, v: 0.22 },
-        { t: 61, v: 0.1 },
-        { t: 78, v: 0.04 },
+        { t: 23, v: 0.7 },
+        { t: 32, v: 0.4 },
+        { t: 44, v: 0.22 },
+        { t: 54, v: 0.1 },
+        { t: 62, v: 0.04 },
       ],
       signal: [
         { t: 0, v: 1 },
-        { t: 36, v: 0.8 },
-        { t: 66, v: 0.45 },
-        { t: 78, v: 0.3 },
+        { t: 32, v: 0.8 },
+        { t: 56, v: 0.45 },
+        { t: 62, v: 0.3 },
       ],
       clips: [
         { t: 0, v: 'Idle' },
-        { t: 61, v: 'Death' },
+        { t: 54, v: 'Death' },
       ],
       expressions: [
         { t: 0, v: null },
-        { t: 36, v: 'Sad' },
+        { t: 32, v: 'Sad' },
       ],
       hud: [
         { t: 0, v: { sol: '5 084', date: '13 MAY 2018', place: 'PERSEVERANCE VALLEY' } },
-        { t: 36, v: { date: '6 JUN 2018', place: 'PERSEVERANCE VALLEY' } },
-        { t: 45, v: { sol: '5 111', date: '10 JUN 2018', place: 'PERSEVERANCE VALLEY' } },
-        { t: 50, v: { sol: '5 111', date: '10 JUN 2018', place: 'PERSEVERANCE VALLEY', temp: '−29 °C' } },
+        { t: 32, v: { date: '6 JUN 2018', place: 'PERSEVERANCE VALLEY' } },
+        { t: 40, v: { sol: '5 111', date: '10 JUN 2018', place: 'PERSEVERANCE VALLEY' } },
+        { t: 44, v: { sol: '5 111', date: '10 JUN 2018', place: 'PERSEVERANCE VALLEY', temp: '−29 °C' } },
       ],
       cards: [
         {
-          at: 61,
-          dur: 10,
+          at: 54,
+          dur: 8,
           kind: 'note',
           text: 'ÚLTIMA SEÑAL RECIBIDA POR LA TIERRA · 10 JUN 2018',
         },
@@ -465,13 +478,13 @@ export const opportunityStory: Story = {
     },
 
     // -----------------------------------------------------------------------
-    // 5 · EL CORTE ELÉCTRICO Y EL LEGADO
+    // 5 · EL CORTE ELÉCTRICO Y EL LEGADO (~68 s)
     // -----------------------------------------------------------------------
     {
       id: 'legado',
       title: 'Capítulo 5 · El corte eléctrico y el legado',
       subtitle: '10 de junio de 2018 → hoy',
-      duration: 80,
+      duration: 68,
       audioKey: 'mars/opportunity_05.mp3',
       place0: 'perseverance',
       marks: [
@@ -482,25 +495,25 @@ export const opportunityStory: Story = {
       cues: [
         { t: 0, text: 'Mis paneles ya no encuentran el Sol.' },
         { t: 5, text: 'Mis ojos… se…' },
-        { t: 15, voice: 'narrator', text: 'La Tierra no dejó de llamar. Durante ocho meses, los ingenieros enviaron más de mil comandos.' },
-        { t: 24, voice: 'narrator', text: 'No hubo respuesta. El 13 de febrero de 2019, la NASA dio la misión por terminada.' },
+        { t: 15, voice: 'narrator', text: 'La Tierra no dejó de llamar: durante ocho meses, los ingenieros enviaron más de mil comandos.' },
+        { t: 22, voice: 'narrator', text: 'El 13 de febrero de 2019, la NASA dio la misión por terminada.' },
         {
-          t: 31,
+          t: 28,
           voice: 'narrator',
           text: 'Opportunity fue diseñado para noventa soles y mil metros. Trabajó casi quince años y recorrió cuarenta y cinco kilómetros: unas sesenta veces más de lo previsto.',
         },
         {
-          t: 44,
+          t: 39,
           voice: 'narrator',
-          text: 'Descansa en Perseverance Valley. El director del JPL lo dijo así: «No puedo pensar en un lugar más adecuado para que Opportunity perdure en la superficie de Marte».',
+          text: 'Descansa en Perseverance Valley. «No puedo pensar en un lugar más adecuado para que Opportunity perdure en la superficie de Marte», dijo el director del JPL.',
         },
         {
-          t: 55,
+          t: 50,
           voice: 'narrator',
-          text: 'Abrió el camino de Curiosity, que aterrizó en 2012 siguiendo sus huellas; y lo que aprendió ayudó a diseñar los rovers que vinieron después.',
+          text: 'Abrió el camino de Curiosity, y lo que aprendió ayudó a diseñar los rovers que vinieron después.',
         },
         {
-          t: 66,
+          t: 58,
           voice: 'narrator',
           text: 'Los robots abandonados no están olvidados. Se quedan mirando el horizonte, esperando que alguien cuente su historia.',
         },
@@ -508,6 +521,17 @@ export const opportunityStory: Story = {
       camera: [
         { t: 0, v: 'pov' },
         { t: 9.6, v: 'wide' },
+        { t: 28, v: 'part' }, // primer plano lento de sus ojos
+        { t: 39, v: 'wide' },
+        { t: 50, v: 'part' }, // y de sus ruedas, quietas
+        { t: 58, v: 'wide' },
+      ],
+      partFocus: [
+        { t: 0, v: null },
+        { t: 28, v: { node: 'mast_head', hotspot: 'none', dist: 2.6, az: 0.9, el: 0.1 } },
+        { t: 39, v: null },
+        { t: 50, v: { node: 'wheel_RM', hotspot: 'none', dist: 3.2, az: 1.1, el: 0.12 } },
+        { t: 58, v: null },
       ],
       scene: [{ t: 0, v: 'surface' }],
       staticLevel: [
@@ -515,7 +539,7 @@ export const opportunityStory: Story = {
         { t: 5, v: 0.85 },
         { t: 8.2, v: 1 },
         { t: 9.4, v: 0 },
-        { t: 80, v: 0 },
+        { t: 68, v: 0 },
       ],
       powerOff: [
         { t: 0, v: 0 },
@@ -527,8 +551,8 @@ export const opportunityStory: Story = {
       dust: [
         { t: 0, v: 1 },
         { t: 16, v: 1 },
-        { t: 60, v: 0.3 },
-        { t: 80, v: 0.3 },
+        { t: 50, v: 0.3 },
+        { t: 68, v: 0.3 },
       ],
       battery: [{ t: 0, v: 0.03 }, { t: 8.2, v: 0 }],
       signal: [{ t: 0, v: 0.3 }, { t: 8.2, v: 0 }],
@@ -548,8 +572,8 @@ export const opportunityStory: Story = {
       cards: [
         { at: 9.8, dur: 5, kind: 'note', text: 'SEÑAL PERDIDA · 10 JUN 2018' },
         {
-          at: 44,
-          dur: 11,
+          at: 39,
+          dur: 10,
           kind: 'quote',
           text: '“I cannot think of a more appropriate place for Opportunity to endure on the surface of Mars.”',
           author: 'Michael Watkins, director del JPL',
