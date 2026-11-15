@@ -20,6 +20,17 @@ export function writeFlag(key: string): void {
   }
 }
 
+/** El visitante silenció el sonido (música y voces) en una visita anterior. */
+export const SOUND_OFF_KEY = 'ecospace.soundOff'
+
+export function clearFlag(key: string): void {
+  try {
+    window.localStorage.removeItem(key)
+  } catch {
+    // sin almacenamiento: no pasa nada
+  }
+}
+
 export function prefersReducedMotion(): boolean {
   try {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches

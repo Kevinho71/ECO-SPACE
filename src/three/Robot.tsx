@@ -3,6 +3,9 @@ import { useAnimations, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { storyRuntime } from '../story/runtime'
+import { exploreRuntime } from '../story/explore'
+import { driveRuntime } from '../story/drive'
+import { EXPLORE_MOTIONS, type RestPose } from './exploreMotions'
 
 export type Expression = 'Sad' | 'Surprised' | 'Sleep' | null
 
@@ -21,6 +24,8 @@ interface RobotProps {
   paused?: boolean
   /** Si es true, la posición X del robot sigue a `storyRuntime.robotX`. */
   followRuntime?: boolean
+  /** Contador que permite repetir el mismo clip (modo Explorar). */
+  nonce?: number
 }
 
 /** Clips que se reproducen una vez y se quedan en su última pose. */
@@ -34,7 +39,7 @@ const SPEED: Record<string, number> = { Death: 0.4, 'Drive!': 0.4, Spin: 0.3 }
  *  - parpadeo aleatorio y expresiones con los morph targets de `face`,
  *  - pulso de la luz de estado (`status_light`, material emisivo).
  */
-export function Robot({ path, expression = null, clip, hold = null, paused = false, followRuntime = false }: RobotProps) {
+export function Robot({ path, expression = null, clip, hold = null, paused = false, followRuntime = false, nonce = 0 }: RobotProps) {
   const group = useRef<THREE.Group>(null)
   const { scene, animations } = useGLTF(path)
   const { actions, mixer } = useAnimations(animations, group)
@@ -140,7 +145,7 @@ export function Robot({ path, expression = null, clip, hold = null, paused = fal
     if (prev && prev !== next) prev.crossFadeTo(next, 0.35, false)
     else next.fadeIn(0.2)
     current.current = next
-  }, [clip, actions, mixer])
+  }, [clip, nonce, actions, mixer])
 
   // Clip congelado en su última pose (tras el clip actual, para que no lo reinicie).
   useEffect(() => {
@@ -164,9 +169,52 @@ export function Robot({ path, expression = null, clip, hold = null, paused = fal
   )
 
   const blink = useRef({ next: 2.5, t: -1 })
+  // Modo Explorar: movimientos por código sobre nodos con nombre (se aplican tras el mezclador y se restauran al acabar).
+  const rest = useRef(new Map<THREE.Object3D, RestPose>())
+  const touched = useRef<string[]>([])
+  const soj = useRef<{ o: THREE.Object3D; p: THREE.Vector3; r: THREE.Euler } | null>(null)
 
   useFrame(({ clock }, dt) => {
     mixer.timeScale = paused ? 0 : 1
+
+    const motion = exploreRuntime.motion ? EXPLORE_MOTIONS[exploreRuntime.motion] : null
+    if (motion) {
+      if (exploreRuntime.t0 < 0) {
+        exploreRuntime.t0 = clock.elapsedTime
+        rest.current.clear()
+        for (const n of motion.nodes) {
+          const o = scene.getObjectByName(n)
+          if (o) rest.current.set(o, { rx: o.rotation.x, ry: o.rotation.y, rz: o.rotation.z, px: o.position.x, py: o.position.y, pz: o.position.z, sx: o.scale.x, sy: o.scale.y, sz: o.scale.z })
+        }
+      }
+      const t = clock.elapsedTime - exploreRuntime.t0
+      motion.apply({
+        u: Math.min(1, t / exploreRuntime.duration),
+        t,
+        node: (n) => scene.getObjectByName(n) ?? undefined,
+        rest: (o) => rest.current.get(o) ?? { rx: 0, ry: 0, rz: 0, px: 0, py: 0, pz: 0, sx: 1, sy: 1, sz: 1 },
+      })
+      touched.current = motion.nodes
+    } else if (touched.current.length) {
+      rest.current.forEach((p, o) => {
+        o.rotation.set(p.rx, p.ry, p.rz)
+        o.position.set(p.px, p.py, p.pz)
+        o.scale.set(p.sx, p.sy, p.sz)
+      })
+      touched.current = []
+    }
+    // Conducción libre de un rover que lleva el modelo dentro (Sojourner): se coloca encima de la animación.
+    const driveNode = driveRuntime.active && driveRuntime.cfg?.kind === 'rover-node' ? scene.getObjectByName(driveRuntime.cfg.node ?? '') : null
+    if (driveNode) {
+      if (!soj.current) soj.current = { o: driveNode, p: driveNode.position.clone(), r: driveNode.rotation.clone() }
+      driveNode.position.set(driveRuntime.sx, driveRuntime.sy, driveRuntime.sz)
+      driveNode.rotation.set(0, driveRuntime.sa, 0)
+    } else if (soj.current) {
+      soj.current.o.position.copy(soj.current.p)
+      soj.current.o.rotation.copy(soj.current.r)
+      soj.current = null
+    }
+
     if (followRuntime && group.current) {
       // El robot no se desplaza: el suelo pasa por debajo. Sigue el relieve (cabeceo, alabeo), se hunde en la arena
       // y tiembla cuando las ruedas patinan.
@@ -191,7 +239,7 @@ export function Robot({ path, expression = null, clip, hold = null, paused = fal
       panels.forEach((p) => p.mat.color.copy(p.base).lerp(dustColor, dm * 0.95))
     }
     if (damaged) {
-      const dm = followRuntime ? storyRuntime.damage : 0
+      const dm = Math.max(followRuntime ? storyRuntime.damage : 0, exploreRuntime.damage)
       damaged.visible = dm > 0.01
       if (damaged.morphTargetInfluences) damaged.morphTargetInfluences[damaged.morphTargetDictionary!['rotor_damage']] = dm
     }
