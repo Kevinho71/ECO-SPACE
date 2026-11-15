@@ -75,8 +75,18 @@ Regla de oro del motor: **valores continuos → `storyRuntime` (mutable); valore
 - Sonido sintetizado (`audio.ts`): añadir un `SfxKind` y su `case` en `playSfx`; no archivos.
 
 ### Mundos distintos (Luna, espacio profundo)
-- Reusar el mismo sistema: un `PlaceId` por escenario y su entorno. `MarsScene` es el modelo; `LunarScene`/`SpaceScene` aún no leen `storyPlace`. Hacer lo mismo que con Marte: precalentar geometrías, grupo de suelo desplazable, props por lugar.
-- Pioneer 10 e Ingenuity no "caminan": Pioneer es solo espacio (cámara `flight`, sin `Ground`); Ingenuity vuela (posición `y` y `pitch` por keyframes en vez de `robotX`). Añadir esos campos al tipo, no condicionales por robot.
+- Reusar el mismo sistema: un `PlaceId` por escenario y su entorno. `MarsScene` es el modelo; `LunarScene` aún no lee `storyPlace`. Hacer lo mismo que con Marte: precalentar geometrías, grupo de suelo desplazable, props por lugar.
+- **Espacio profundo (hecho para Pioneer 10):** los lugares son datos en `deepPlaces.ts` (`DEEP_PLACES`: cuerpos con `path` por tiempo del lugar, asteroides, polvo, cola magnética, anillos de señal, resplandores) y `DeepSpace.tsx` los dibuja. Todo es función pura de `storyRuntime.placeT` (segundos desde que empezó el lugar; lo calcula `StoryDirector`). Un lugar nuevo = una entrada en `DEEP_PLACES` + su id en `DeepPlaceId`. La sonda mira a +X; los cuerpos que "pasan" van hacia +X.
+- **Vista exterior configurable:** `StoryChapter.wide` (`WideShot`: `dist`, `height`, `az`, `swing`, `target`, `fov`). Sin ella, la órbita por defecto de siempre. Cámbiala con keyframes para alternar planos; la cámara se mueve sola con suavidad.
+- **Horizonte estable:** `StoryChapter.povRoll` (0–1) limita cuánto del giro/balanceo del robot hereda la cámara POV. Úsalo con robots que giran (Pioneer) para no marear.
+- **POV y modelos sin `mast_head`:** la cámara busca `mast_head` y, si no existe, `feed_head`. Un modelo nuevo debe tener uno de los dos con `pov_eye` colgando de él (si no, el POV no se mueve y no da error).
+- **Obstáculos del propio modelo:** mira qué parte del robot tapa la vista antes de elegir `pan` (el plato de Pioneer tapa todo lo que viene de frente: eso se ve en `wide`).
+- **Piezas que no están en el GLB** (p. ej. la cabina de Eagle): componente en `src/three/extras.tsx`, registrado por id en `MISSION_EXTRAS` (se dibuja con y sin historia). Su movimiento sale de **pistas con nombre** del capítulo: `tracks: { ascent: [...], fire: [...] }` → `storyRuntime.tracks.<nombre>` (interpoladas; las que un capítulo no define valen 0). No hace falta tocar el motor.
+- **Lugares sin suelo en la Luna:** los que no tienen superficie (órbita, descenso) son `DeepPlaceId` y los dibuja `DeepSpace` (ej. `descent`: una esfera lunar enorme que sube hacia el robot, con `flame: true`); los que sí la tienen (`tranquility`, `LunarPlaceId`) usan `LunarScene`. `MissionScene` elige según el lugar.
+- **Luna = sin viento:** usa `scene: 'flight'` en todos los capítulos (la escena `'surface'` mete un fondo de viento pensado para Marte).
+- **Texto de las pantallas:** `Story.texts` (inicio, botón de explorar, pista, kicker del cierre); lo que falte usa los de Opportunity.
+- **Modelo con `face_plate`:** la cámara POV busca `mast_head`, luego `feed_head` y luego `face_plate` como "cabeza".
+- Ingenuity vuela (posición `y` y `pitch` por keyframes en vez de `robotX`). Añadir esos campos al tipo, no condicionales por robot.
 
 ---
 

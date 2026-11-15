@@ -4,6 +4,29 @@
 
 export type Expression = 'Sad' | 'Surprised' | 'Sleep' | null
 
+/** Escenarios del espacio profundo (sin suelo): el mundo pasa alrededor de la sonda. Ver `deepPlaces.ts`. */
+export type DeepPlaceId =
+  | 'leaving-earth'
+  | 'inner'
+  | 'belt'
+  | 'outbound'
+  | 'jupiter'
+  | 'jupiter-moons'
+  | 'jupiter-tail'
+  | 'neptune'
+  | 'interstellar'
+  | 'aldebaran'
+  // Apolo 11 (Eagle): del lanzamiento al descenso, en el espacio.
+  | 'earth-orbit'
+  | 'translunar'
+  | 'lunar-orbit'
+  | 'descent'
+  // Surveyor 3: aproximación corta a la Luna antes de tocar el suelo.
+  | 'moon-approach'
+
+/** Lugares con superficie lunar (los dibuja LunarScene). */
+export type LunarPlaceId = 'tranquility' | 'oceanus'
+
 /** Lugares (escenarios) por los que pasa la historia. 'launch'/'cruise'/'entry' son escenas del viaje en el espacio. */
 export type PlaceId =
   | 'generic'
@@ -17,6 +40,8 @@ export type PlaceId =
   | 'victoria'
   | 'endeavour'
   | 'perseverance'
+  | DeepPlaceId
+  | LunarPlaceId
 
 /** pov = ojo del robot · wide = vista exterior orbitando · part = primer plano de una pieza · flight = cámara cinematográfica del viaje */
 export type StoryView = 'pov' | 'wide' | 'part' | 'flight'
@@ -32,6 +57,23 @@ export interface PartFocus {
   az: number
   /** Elevación (rad). */
   el: number
+}
+
+/**
+ * Vista exterior ('wide'): órbita lenta alrededor de un punto del robot. Todo es opcional;
+ * por defecto: dist 7,5 · altura 2,3 · az 0,9 · vaivén ±0,35 · objetivo (0; 0,85; 0).
+ */
+export interface WideShot {
+  dist?: number
+  /** Altura absoluta de la cámara (m). */
+  height?: number
+  /** Ángulo base (rad) medido desde +X (frente del robot) hacia +Z (derecha). */
+  az?: number
+  /** Amplitud del vaivén lento alrededor de `az` (rad). */
+  swing?: number
+  /** Punto al que mira [x, y, z]; la órbita se centra en su x/z. */
+  target?: [number, number, number]
+  fov?: number
 }
 
 /** Valor que cambia a lo largo del capítulo (interpolación lineal o escalonada según el campo). */
@@ -70,6 +112,8 @@ export type SfxKind =
   | 'powerdown'
   | 'relay'
   | 'blink'
+  | 'alarm' // alarmas del ordenador (1202 / 1201)
+  | 'thud' // golpe seco (contacto con el suelo)
 
 export interface StoryCard {
   at: number
@@ -102,6 +146,15 @@ export interface StoryChapter {
   partFocus?: Keyframe<PartFocus | null>[]
   /** Giro automático de la mirada (rad), para panorámicas. */
   pan?: Keyframe<number>[]
+  /** Vista exterior configurable (escalonada). Sin ella, la órbita por defecto de `WideShot`. */
+  wide?: Keyframe<WideShot>[]
+  /** Cuánto del giro/balanceo del robot hereda la cámara POV, 0–1 (1 = todo; 0 = horizonte fijo). Por defecto 1. */
+  povRoll?: Keyframe<number>[]
+  /**
+   * Pistas numéricas con nombre (interpoladas) que leen las piezas propias de cada robot desde
+   * `storyRuntime.tracks`: p. ej. 'ascent' (altura de la cabina de Eagle) y 'fire' (su motor encendido).
+   */
+  tracks?: Record<string, Keyframe<number>[]>
   /** Hundimiento de las ruedas en la arena (m) y patinaje (0–1). */
   sink?: Keyframe<number>[]
   slip?: Keyframe<number>[]
@@ -136,8 +189,38 @@ export interface StoryChapter {
   audioKey?: string
 }
 
+/** Textos de las pantallas que rodean a la historia (inicio, exploración, cierre). Lo que falte usa los de Opportunity. */
+export interface StoryTexts {
+  /** Línea pequeña sobre el nombre en la pantalla de inicio. */
+  kicker: string
+  /** Nombre del robot en la pantalla de inicio. */
+  name: string
+  /** Presentación bajo el nombre. */
+  intro: string
+  /** Botón de inicio. */
+  startLabel: string
+  /** Botón para pasar a explorar el modelo. */
+  exploreLabel: string
+  /** Pista mientras se explora. */
+  exploreHint: string
+  /** Línea pequeña sobre la tarjeta de aclaración del cierre. */
+  endKicker: string
+}
+
+export const DEFAULT_STORY_TEXTS: StoryTexts = {
+  kicker: 'Mars Exploration Rover · MER-B',
+  name: 'Opportunity',
+  intro: 'Vas a vivir su historia desde dentro: tus ojos serán los suyos. Mira alrededor arrastrando.',
+  startLabel: '▶ Despertar a Oppy',
+  exploreLabel: 'Explorar el rover',
+  exploreHint: 'Arrastra para girar alrededor de Oppy · pulsa los puntos brillantes para ver sus partes',
+  endKicker: '¿Qué dijo de verdad?',
+}
+
 export interface Story {
   missionId: string
+  /** Textos propios de las pantallas de esta historia (opcional). */
+  texts?: Partial<StoryTexts>
   chapters: StoryChapter[]
   /** Tarjeta de transparencia mostrada al terminar. */
   transparency: { title: string; body: string; sources: { label: string; url: string }[] }

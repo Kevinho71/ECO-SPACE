@@ -6,6 +6,8 @@ export const storyRuntime = {
   active: false,
   /** Tiempo (s) dentro del capítulo actual. */
   t: 0,
+  /** Segundos desde que empezó el lugar actual (los escenarios del espacio se animan con él). */
+  placeT: 0,
   chapter: 0,
   staticLevel: 0,
   dust: 0,
@@ -30,12 +32,15 @@ export const storyRuntime = {
   groundY: 0,
   pitch: 0,
   roll: 0,
+  /** Pistas numéricas de la historia (ver `StoryChapter.tracks`). */
+  tracks: {} as Record<string, number>,
 }
 
 export function resetRuntime() {
   Object.assign(storyRuntime, {
     active: false,
     t: 0,
+    placeT: 0,
     chapter: 0,
     staticLevel: 0,
     dust: 0,
@@ -55,5 +60,6 @@ export function resetRuntime() {
     groundY: 0,
     pitch: 0,
     roll: 0,
+    tracks: {},
   })
 }

@@ -209,10 +209,10 @@
 
 ## 7. Tarjeta de transparencia — "¿Bacterias en la Luna?"
 
-> **¿Sobrevivieron bacterias de la Tierra dentro de la cámara de Surveyor 3?**
-> Es una historia muy contada, pero no la incluimos porque no encontramos ninguna fuente oficial de la NASA que la confirme. Muchos científicos piensan que las bacterias llegaron a la cámara **después**, ya en la Tierra.
+> **¿Sobrevivieron bacterias en la Luna dentro de la cámara?**
+> Al analizar la cámara que trajo el Apolo 12 se encontró una bacteria (*Streptococcus mitis*) en una espuma del interior. Se contó que había sobrevivido 31 meses en la Luna, pero los informes de la NASA **no lo dejan claro**: pudo estar allí desde antes del lanzamiento, o llegar después, ya en la Tierra, durante el análisis. Las demás piezas de la cámara no tenían bacterias.
 
-⚠ **Solo publicar si se encuentra una fuente oficial** que respalde la segunda frase (§10). Si no, no mostrar la tarjeta.
+**Verificado (15-nov-2026):** hay material educativo y artículos técnicos de la NASA sobre el hallazgo, y **no están de acuerdo** en el origen (una hipótesis apunta a la prueba de vacío antes del lanzamiento; otra, a contaminación durante el análisis en la Tierra). Por eso la tarjeta lo presenta como una pregunta abierta, no como un hecho. Las fuentes están en la tarjeta (`surveyor3.ts` → `transparency`). ⚠ Se leyeron por resumen de búsqueda, no completas.
 
 ---
 
@@ -239,9 +239,10 @@
 | # | Pendiente | Motivo |
 |---|---|---|
 | 1 | Aprobar el giro "la visita se cuenta después del corte" | Cambia la estructura estándar del cap. 5 |
-| 2 | Verificar "única visita humana a un robot en otro mundo" en una página NASA | Línea del cap. 5B |
-| 3 | Buscar fuente oficial sobre las bacterias (o descartar la tarjeta §7) | Rigor |
-| 4 | Decidir si el feed va en blanco y negro | Fidelidad histórica vs. legibilidad |
+| 2 | ~~Verificar "primera/única visita humana a un robot en otro mundo"~~ **Resuelto:** no figura en las páginas NASA consultadas; la frase se quitó. Se dice solo "un robot que había llegado a la Luna mucho antes que ellos" | Línea del cap. 5B |
+| 3 | ~~Buscar fuente oficial sobre las bacterias~~ **Resuelto:** hay fuentes NASA, pero el origen sigue sin resolverse; la tarjeta lo cuenta como duda abierta (§7) | Rigor |
+| 4 | Decidir si el feed va en blanco y negro | **Sin hacer:** no se aplicó el filtro de imagen en B/N (Fidelidad histórica vs. legibilidad) |
+| 5 | El suelo del escenario es llano: el módulo del Apolo 12 y los astronautas se apoyan en el relieve, pero la ladera de 14° se reduce a ≈7° | Ver §12 |
 
 ---
 
@@ -253,3 +254,43 @@
 4. NASA History — *55 Years Ago: Apollo 12 Makes a Pinpoint Landing on the Moon*: https://www.nasa.gov/history/55-years-ago-apollo-12-makes-a-pinpoint-landing-on-the-moon/
 5. NASA — *Apollo 12*: https://www.nasa.gov/mission/apollo-12/
 6. NASA Science — *APOD: Apollo 12 and Surveyor 3*: https://science.nasa.gov/image-article/apod-2026-november-14-apollo-12-and-surveyor-3/
+
+---
+
+## 12. Implementación (estado)
+
+- **Guion:** `src/data/stories/surveyor3.ts` (5 capítulos, subtítulos, sin voces). Registrado en `StoryDirector.tsx`. Textos de las pantallas (inicio, exploración, cierre) propios en `texts`.
+- **Hotspots:** `hotspots.ts` → `surveyor3`: cámara de TV, brazo con pala, panel solar y patas (nodos verificados en `surveyor3.glb`). Las cámaras de primer plano los usan.
+- **Escena:** siempre `flight` (en la Luna no hay viento). Cámaras `pov`, `wide` y `part`. El POV cuelga de `tv_head`.
+- **Lugares:** `earth-orbit` → `translunar` → `moon-approach` (DeepSpace, con llama del motor) → `oceanus` (LunarScene, tras un parpadeo).
+- **Piezas extra** (`three/extras.tsx` → `MISSION_EXTRAS.surveyor3`, con pistas del capítulo): llama de los motores en los rebotes (`fire`); atardecer, que baja y calienta la luz y apaga el Sol (`dust`); módulo lunar del Apolo 12 descendiendo (`lmShow`, `lmAlt`, `lmFire`); dos astronautas que caminan hasta Surveyor 3 y vuelven (`astro`, `walk`); y la cámara y la pala que se llevan (`strip`, ocultan `tv_camera` y `sampler_scoop`).
+- **Rebotes:** `sink` negativo levanta la nave (10 m y 3 m, parabólicos). Pistas genéricas nuevas `lift`, `tilt` y `bank` en `Robot.tsx` para apoyarla en la ladera.
+- **Sonido:** nuevo `SfxKind` `'thud'` para cada contacto con el suelo.
+
+### Escenas y vistas
+| Cap. | Lugares (parpadeo en `t`) | Vistas (`t` en s) |
+|---|---|---|
+| 1 | `oceanus` | POV 0 · 3.ª 10,65 · cámara 17,65 · brazo 21,3 · panel 24 · POV 26,65 · 3.ª 32,65 · POV 41,65 |
+| 2 | `earth-orbit` → `translunar` (10,65) → `moon-approach` (18,65) → `oceanus` (29,65) | POV 0 · 3.ª 10,65 · POV 18,65 · 3.ª 29,65 (rebotes) · POV 35,65 · 3.ª 40,65 · POV 52,65 |
+| 3 | `oceanus` | POV 0 (mira alrededor) · pala 18,65 · 3.ª 37,65 · POV 45,65 |
+| 4 | `oceanus` (luz que cae) | POV 0 · 3.ª 5,65 · panel 17,65 · POV 21,65 |
+| 5 | `oceanus` → `oceanus` (20,65: salto al 19-nov-1969) | POV 0 · 3.ª 11,65 hasta el final: la nave inerte → Apolo 12 y Surveyor en el mismo plano (36,65) → los astronautas junto a la nave (51,65) → alejándose (60,65) |
+
+### Cambios respecto al guion de §4 (por verificación o por rigor)
+- **Cap. 2:** los tiempos del relato se **reordenan** para que el número de contactos quede visible: contacto 1 a los 30 s, contacto 2 a los 36 s, orden de apagado a los 41–43 s y contacto 3 a los 45 s (HUD: `T+0 s`, `T+34 s`, `T+36 s`, coherente con NSSDC: 00:04:17 → 00:04:53 UT). La escala de tiempo está **comprimida** (en la realidad, 36 s; aquí, 15 s) y el HUD muestra los segundos reales.
+- **Cap. 5:** se quitó "Fue la primera vez que unas personas visitaban a un robot en otro mundo" (no figura en las páginas NASA consultadas). "Los astronautas caminaron hasta él" se mantiene. El 5B sale con astronautas **esquemáticos** (no siluetas) y con el módulo del Apolo 12.
+- **Cap. 3:** los números de las fotos del HUD usan solo datos verificados ("primera imagen en menos de 1 h", "una cada ~20 s", "4 zanjas", "6 326 imágenes"); no hay contador inventado.
+- **Tarjeta de transparencia:** ahora sí se muestra, como duda abierta (ver §7).
+- **Duraciones:** 50 · 60 · 56 · 38 · 80 s (≈ 4 min 44 s). El cap. 4 dura 38 s (el doc estimaba ~55 s): el guion ocupa unos 35 s.
+
+### Licencias de la animación
+- **Escala y distancia:** el viaje de tres días se resume en 11 s; la Luna debajo del descenso es una esfera de radio 700 (no a escala).
+- **Rebotes:** las alturas (10 m y 3 m) son las de NASA; la duración de cada salto y el tiempo comprimido son ilustrativos. El tercer contacto se muestra como un saltito de menos de 0,5 m tras apagar los motores (NSSDC no da la altura).
+- **Distancia al Apolo 12:** en la realidad unos 180 m (NASA da también 538 pies ≈ 164 m); en pantalla, unos 30 m, para que se vean los dos. El módulo, los astronautas y su paseo son modelos esquemáticos.
+- **Astronautas:** figuras simples (cuerpo blanco y visor dorado); no son una réplica de Conrad y Bean.
+- **Ladera:** la inclinación real (≈14°) se reduce a ≈7° (el suelo del escenario es llano).
+- **Atardecer:** el Sol y la luz se apagan con un fundido corto; en la Luna el crepúsculo es más brusco (no hay atmósfera) y la noche dura unas dos semanas.
+- **Imagen:** no se aplicó el filtro de blanco y negro por líneas de la cámara real.
+
+### Sin verificar visualmente
+Posiciones de cámara, los rebotes, el módulo del Apolo 12 y el paseo de los astronautas se calcularon por geometría, **sin capturas**. Revisar con `seek`: cap. 1 t=2, 20, 38 · cap. 2 t=3, 14, 24, 31, 37, 44, 55 · cap. 3 t=5, 22, 40 · cap. 4 t=3, 12, 20, 30 · cap. 5 t=5, 25, 40, 50, 58, 65.

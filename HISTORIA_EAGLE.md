@@ -258,11 +258,12 @@
 
 | # | Pendiente | Motivo |
 |---|---|---|
-| 1 | Verificar en ALSJ que Armstrong tomó el control manual para esquivar una zona con rocas | La transcripción no se pudo leer completa |
-| 2 | Leer SP-4029 (PDF demasiado grande para la herramienta) para confirmar los 45 s de combustible | Tarjeta de §7 |
-| 3 | Confirmar "doce personas caminaron por la Luna" en nasa.gov | Línea del cap. 5B |
+| 1 | ~~Verificar que Armstrong tomó el control manual~~ **Resuelto (15-nov-2026):** ALSJ y NASA coinciden en que pasó a control manual para evitar un campo de rocas junto al cráter West ("aterrizar largo"). La **altura** a la que lo hizo difiere entre fuentes: no se da. | Cap. 2 |
+| 2 | Leer SP-4029 (PDF demasiado grande para la herramienta) para confirmar los 45 s de combustible | **La tarjeta de transparencia ya no da la cifra**, solo que "quedaba más de lo que parecía"; sigue pendiente si se quiere dar el número |
+| 3 | ~~Confirmar "doce personas caminaron por la Luna"~~ **Resuelto:** NASA Science, *Moonwalkers*: 12 astronautas, Apolo 11 a 17 (1969–1972) | Cap. 5B |
 | 4 | Conseguir el audio original de la NASA de las dos citas | Más fuerza y rigor que una voz sintética |
-| 5 | Confirmar el documento de 2023 sobre el reflector (solo se vio por buscador) | Dato del legado |
+| 5 | Confirmar el documento de 2023 sobre el reflector (solo se vio por buscador). Se usa "más de cincuenta años después, los científicos todavía lo usan", apoyado en un resumen de ILRS (también solo por buscador) | Dato del legado |
+| 6 | El modelo no incluye la cabina (etapa de ascenso): se dibuja de forma esquemática en `extras.tsx` | Fidelidad visual |
 
 ---
 
@@ -278,3 +279,39 @@
 8. NASA — *Apollo 11 Anniversary Lithograph* (2023): https://assets.science.nasa.gov/content/dam/science/psd/lunar-science/2023/09/Apollo11AnniversaryLitho_updated.pdf ⚠ leído solo vía resumen de búsqueda
 9. NSSDC — *Apollo: Where are they now?*: https://nssdc.gsfc.nasa.gov/planetary/lunar/apolloloc.html
 10. NASA SP-4029 — *Apollo by the Numbers*, resumen Apollo 11: https://history.nasa.gov/SP-4029/Apollo_11a_Summary.htm ⚠ no se pudo leer (PDF > 10 MB)
+
+---
+
+## 12. Implementación (estado)
+
+- **Guion:** `src/data/stories/eagle.ts` (5 capítulos, subtítulos, sin voces). Registrado en `StoryDirector.tsx`. Textos de las pantallas (inicio, exploración, cierre) propios en `texts`.
+- **Hotspots:** `hotspots.ts` → `eagle`: escalera, sismómetro, reflector láser, motor, etapa de descenso y patas (nodos verificados en `eagle.glb`). Los usan las cámaras de primer plano y el modo exploración.
+- **Escena:** siempre `flight` (en la Luna no hay viento: solo telemetría). Cámaras `pov`, `wide` y `part`. El POV cuelga de `face_plate` (el modelo no tiene `mast_head`).
+- **Cabina (etapa de ascenso):** no está en el GLB. `src/three/extras.tsx` la dibuja sobre `ascent_mount` y la hace despegar con las pistas `tracks.ascent` (altura) y `tracks.fire` (motor). Se registra por misión en `MISSION_EXTRAS`.
+- **Alarma:** nuevo `SfxKind` `'alarm'` (pitidos de las alarmas 1202).
+
+### Escenas y vistas
+| Cap. | Lugares (parpadeo en `t`) | Vistas (`t` en s) |
+|---|---|---|
+| 1 | `tranquility` | POV 0 · 3.ª 11,65 · POV 26,65 · 3.ª 35,65 |
+| 2 | `earth-orbit` → `translunar` (11,65) → `lunar-orbit` (22,65) → `descent` (29,65) → `tranquility` (69,65) | POV 0 · 3.ª 11,65 · POV 22,65 · 3.ª 29,65 (llama del motor) · POV 57,65 · 3.ª 69,65 |
+| 3 | `tranquility` | 3.ª 0 · escalera 4,65 · POV 21,65 · sismómetro 39,65 · reflector 49,65 · 3.ª 69,65 |
+| 4 | `tranquility` | POV 0 · 3.ª 5,65 · la cámara sube siguiendo a la cabina desde 24,4 |
+| 5 | `tranquility` | POV 0 · 3.ª 11,65 · reflector 18,65 · 3.ª 26,65 · escalera 42,65 · 3.ª 51,65 |
+
+### Cambios respecto al guion de §4 (por verificación o por rigor)
+- **Cap. 2:** se quitó "el cohete más grande de su época" (no verificado) y "tres naves" (inexacto). El control manual de Armstrong ya está **verificado**: "el ordenador nos lleva hacia un campo de piedras, y Armstrong toma el control".
+- **Cap. 3:** "Seis horas después" → "Unas seis horas y media después del alunizaje" (20:17:40 UT → 02:56:15 UT). Se quitó "saltan" (no verificado). "Nunca se cansará" → "Años después, seguía funcionando perfectamente" (JPL, 2004). "Al centímetro" → "con un error de unos dos centímetros".
+- **Cap. 5:** "Décadas después, los científicos todavía le envían pulsos de luz" → "Más de cincuenta años después, los científicos todavía lo usan". La cabina: "se cree que cayó sobre la Luna unos meses después" (NSSDC).
+- **Tarjeta de transparencia:** sin la cifra de segundos (ver §10 #2).
+- **Duraciones:** 54 · 80 · 80 · 44 · 62 s (≈ 5 min 20 s). El cap. 4 dura 44 s (el doc decía ~60 s): el guion ocupa unos 38 s.
+
+### Licencias de la animación
+- **Escala y distancia:** la Luna y la Tierra no están a escala (la Luna debajo es una esfera de radio 700, la Tierra de 600). El viaje de tres días se resume en 11 s.
+- **Descenso:** la altura y la velocidad con que sube la superficie son ilustrativas. No se muestra el campo de rocas ni el cráter West.
+- **Sin astronautas:** no hay figuras de Armstrong ni Aldrin: se cuentan con la escalera, los subtítulos y las tarjetas con sus citas. La cabina es un modelo esquemático.
+- **Llama del motor de descenso:** representa el frenado; su aspecto no es una réplica.
+- **Escalera:** en el modelo 3D sube hacia fuera (la parte de arriba queda más lejos del cuerpo que la de abajo): es una imperfección del modelo, no un dato.
+
+### Sin verificar visualmente
+Posiciones de cámara, encuadre de los primeros planos y la cabina se calcularon por geometría, **sin capturas**. Revisar con `seek`: cap. 1 t=0, 15, 38 · cap. 2 t=2, 15, 25, 31, 60, 72 · cap. 3 t=2, 8, 25, 42, 55, 72 · cap. 4 t=8, 22, 30, 38 · cap. 5 t=5, 20, 45, 56.

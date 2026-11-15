@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Stars, useCursor } from '@react-three/drei'
+import { Line, OrbitControls, Stars, useCursor } from '@react-three/drei'
 import { ScaledHtml } from './ScaledHtml'
 import * as THREE from 'three'
 import { useAppStore, type LocationId } from '../store/useAppStore'
@@ -349,6 +349,49 @@ function BeyondBeacon({
   )
 }
 
+// ---------------------------------------------------------------------------
+// Pioneer 10 no orbita: sale del sistema solar en línea recta, rumbo a Aldebarán. La baliza repite ese viaje en
+// bucle (parte de la órbita de la Tierra, cruza el cinturón de asteroides, pasa Júpiter y se aleja más allá de
+// Neptuno), con la ruta marcada. Se detiene como las órbitas cuando el usuario la apunta o vuela hacia ella.
+// ---------------------------------------------------------------------------
+const OUT_SECONDS = 80
+const OUT_ANGLE = -0.9
+const OUT_DIR = new THREE.Vector3(Math.cos(OUT_ANGLE), 0.03, Math.sin(OUT_ANGLE)).normalize()
+const OUT_START = OUT_DIR.clone().multiplyScalar(4.4)
+const OUT_END = OUT_DIR.clone().multiplyScalar(27)
+
+function Outbound({
+  groupRef,
+  children,
+}: {
+  groupRef?: { current: THREE.Group | null } | null
+  children: React.ReactNode
+}) {
+  const local = useRef<THREE.Group>(null)
+  const u = useRef(0.2) // empieza ya en camino, no en la Tierra
+  useFrame((_, delta) => {
+    const g = local.current
+    if (!g) return
+    u.current = (u.current + (Math.min(delta, 0.1) * orbitClock.scale) / OUT_SECONDS) % 1
+    g.position.lerpVectors(OUT_START, OUT_END, u.current)
+    // Aparece al salir y se desvanece al perderse de vista (el bucle nunca "salta").
+    const fade = THREE.MathUtils.smoothstep(u.current, 0, 0.05) * (1 - THREE.MathUtils.smoothstep(u.current, 0.93, 1))
+    g.scale.setScalar(Math.max(0.0001, fade))
+  })
+  useEffect(() => {
+    if (groupRef) groupRef.current = local.current
+    return () => {
+      if (groupRef) groupRef.current = null
+    }
+  }, [groupRef])
+  return (
+    <>
+      <Line points={[OUT_START, OUT_END]} color="#cfe0ff" transparent opacity={0.22} lineWidth={1} dashed dashSize={0.35} gapSize={0.3} />
+      <group ref={local}>{children}</group>
+    </>
+  )
+}
+
 interface ControlsLike {
   target: THREE.Vector3
   enabled: boolean
@@ -545,10 +588,9 @@ export function SolarMap() {
         <OrbitRing radius={15.5} />
         <Planet radius={0.48} map={tex.neptune} selfRotation={0.4} tilt={0.5} />
       </Orbiter>
-      <Orbiter groupRef={beyondRef} radius={17.5} speed={0.04}>
-        <OrbitRing radius={17.5} />
+      <Outbound groupRef={beyondRef}>
         <BeyondBeacon lit={isLit('beyond')} onSelect={go} onHover={setHovered} />
-      </Orbiter>
+      </Outbound>
 
       {fly && (
         <FlyTo

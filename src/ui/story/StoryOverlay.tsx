@@ -3,9 +3,12 @@ import { useAppStore } from '../../store/useAppStore'
 import { getStory, storyControls } from '../../story/StoryDirector'
 import { storyRuntime } from '../../story/runtime'
 import { HOTSPOTS } from '../../data/hotspots'
-import type { Story } from '../../data/story'
+import { DEFAULT_STORY_TEXTS, type Story, type StoryTexts } from '../../data/story'
 
 const GLASS = 'bg-slate-950/70 backdrop-blur-md border border-white/15'
+
+/** Textos de las pantallas de esta historia (los que no defina, los de Opportunity). */
+const textsOf = (story: Story): StoryTexts => ({ ...DEFAULT_STORY_TEXTS, ...story.texts })
 
 function IconBtn({ label, onClick, children, active = false }: { label: string; onClick: () => void; children: React.ReactNode; active?: boolean }) {
   return (
@@ -22,23 +25,22 @@ function IconBtn({ label, onClick, children, active = false }: { label: string; 
   )
 }
 
-/** Pantalla inicial: el feed está apagado hasta que el usuario "despierta" a Oppy (también activa el audio). */
+/** Pantalla inicial: el feed está apagado hasta que el usuario "despierta" al robot (también activa el audio). */
 function StartScreen({ story }: { story: Story }) {
   const soundOn = useAppStore((s) => s.soundOn)
   const reduce = useAppStore((s) => s.reduceEffects)
   const patch = useAppStore((s) => s.patchStory)
+  const T = textsOf(story)
   return (
     <div className="pointer-events-auto absolute inset-0 z-[16] flex flex-col items-center justify-center bg-black px-6 text-center">
-      <p className="font-mono text-xs uppercase tracking-[0.4em] text-slate-500">Mars Exploration Rover · MER-B</p>
-      <h2 className="mt-4 text-4xl font-semibold text-white md:text-6xl">Opportunity</h2>
-      <p className="mt-3 max-w-md text-slate-300">
-        Vas a vivir su historia <em>desde dentro</em>: tus ojos serán los suyos. Mira alrededor arrastrando.
-      </p>
+      <p className="font-mono text-xs uppercase tracking-[0.4em] text-slate-500">{T.kicker}</p>
+      <h2 className="mt-4 text-4xl font-semibold text-white md:text-6xl">{T.name}</h2>
+      <p className="mt-3 max-w-md text-slate-300">{T.intro}</p>
       <button
         onClick={() => storyControls.start()}
         className="mt-8 rounded-full border border-white/40 bg-white/10 px-8 py-3 text-lg text-white transition hover:bg-white/25"
       >
-        ▶ Despertar a Oppy
+        {T.startLabel}
       </button>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-sm text-slate-400">
         <label className="flex cursor-pointer items-center gap-2">
@@ -207,7 +209,7 @@ function Timeline({ story }: { story: Story }) {
               onClick={() => setMode(mode === 'guided' ? 'free' : 'guided')}
               className="pointer-events-auto rounded-full border border-white/25 px-4 py-1.5 text-sm text-slate-200 transition hover:bg-white/10"
             >
-              {mode === 'guided' ? 'Explorar el rover' : 'Volver a la historia'}
+              {mode === 'guided' ? textsOf(story).exploreLabel : 'Volver a la historia'}
             </button>
           </div>
         </div>
@@ -236,12 +238,12 @@ function Inspector({ missionId }: { missionId: string }) {
   )
 }
 
-function ExploreHint() {
+function ExploreHint({ story }: { story: Story }) {
   const mode = useAppStore((s) => s.cameraMode)
   if (mode !== 'free') return null
   return (
     <p className="pointer-events-none absolute inset-x-0 top-24 z-[14] text-center text-sm text-slate-300/80">
-      Arrastra para girar alrededor de Oppy · pulsa los puntos brillantes para ver sus partes
+      {textsOf(story).exploreHint}
     </p>
   )
 }
@@ -253,7 +255,7 @@ function EndScreen({ story }: { story: Story }) {
   return (
     <div className="pointer-events-auto absolute inset-0 z-[17] flex items-center justify-center bg-black/85 px-6">
       <div className={`${GLASS} max-w-xl rounded-2xl p-7`}>
-        <p className="font-mono text-xs uppercase tracking-[0.35em] text-amber-200">¿Qué dijo de verdad?</p>
+        <p className="font-mono text-xs uppercase tracking-[0.35em] text-amber-200">{textsOf(story).endKicker}</p>
         <h3 className="mt-3 text-xl font-semibold text-white">{t.title}</h3>
         <p className="mt-3 leading-relaxed text-slate-200">{t.body}</p>
         <ul className="mt-4 space-y-1 text-xs text-slate-400">
@@ -290,7 +292,7 @@ export function StoryOverlay({ missionId }: { missionId: string }) {
           <Subtitles story={story} />
           <Card />
           <PartCallout missionId={missionId} />
-          <ExploreHint />
+          <ExploreHint story={story} />
           <Inspector missionId={missionId} />
           <Timeline story={story} />
         </>
