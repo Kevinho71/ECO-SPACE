@@ -48,7 +48,7 @@ export const opportunityStory: Story = {
       partFocus: [
         { t: 0, v: null },
         { t: 20.5, v: { node: 'mast_head', hotspot: 'pancam', dist: 1.7, az: 0.55, el: 0.12 } },
-        { t: 26.5, v: { node: 'arm', hotspot: 'arm', dist: 2.1, az: -0.3, el: 0.02 } },
+        { t: 26.5, v: { node: 'arm_turret', hotspot: 'arm', dist: 2.6, az: -1.0, el: 0.38 } },
         { t: 33.5, v: { node: 'deck', hotspot: 'panels', dist: 3.6, az: 2.5, el: 0.5 } },
         { t: 39.5, v: { node: 'wheel_RM', hotspot: 'wheels', dist: 3.0, az: 1.25, el: 0.12 } },
         { t: 46.5, v: { node: 'antenna', hotspot: 'antenna', dist: 1.9, az: 2.5, el: 0.25 } },
@@ -284,7 +284,7 @@ export const opportunityStory: Story = {
         { t: 92, v: 'pov' },
       ],
       partFocus: [
-        { t: 0, v: { node: 'arm', hotspot: 'none', dist: 2.1, az: -0.3, el: 0.02 } },
+        { t: 0, v: { node: 'arm_turret', hotspot: 'none', dist: 2.6, az: -1.0, el: 0.38 } },
         { t: 6, v: null },
       ],
       // La mirada recorre las capas de la roca y las esferas.
@@ -580,6 +580,39 @@ export const opportunityStory: Story = {
           source: 'NASA, 13 feb 2019',
         },
       ],
+    },
+  ],
+
+  // -------------------------------------------------------------------------
+  // MODO EXPLORAR · escenario, acciones y tarjetas "¿Qué pasaría si…?" (siempre HIPOTÉTICAS)
+  // -------------------------------------------------------------------------
+  explore: {
+    place: 'eagle', // cráter Eagle: el primer lugar de Oppy, con el rover entero a la vista
+    drive: { kind: 'wheels', maxSpeed: 3.2, label: 'Explorar la zona con Oppy' },
+    actions: [
+      { id: 'wake', label: 'Despertar', hint: 'Despliega paneles y levanta el mástil', clip: 'Wake', duration: 3, focus: 'pancam' },
+      { id: 'drive', label: 'Rodar', hint: 'Giran sus seis ruedas', clip: 'Drive', duration: 6 },
+      { id: 'arm', label: 'Extender el brazo', hint: 'Mueve el brazo con sus instrumentos', motion: 'opportunity-arm', duration: 6 },
+      { id: 'look', label: 'Mirar alrededor', hint: 'Gira la cabeza del mástil con la Pancam', motion: 'opportunity-look', duration: 7, focus: 'pancam' },
+    ],
+  },
+  whatIfs: [
+    {
+      id: 'tormenta',
+      question: 'la tormenta de polvo de 2018 no hubiera tapado el Sol',
+      imagine:
+        'Con el cielo despejado, los paneles seguirían recibiendo luz cada mañana y la batería se recargaría. Oppy terminaría su panorama completo y seguiría bajando por Perseverance Valley; quizá otro golpe de viento limpiaría los paneles, como tantas veces antes.',
+      reality:
+        'En 2018 una tormenta de polvo cubrió Marte. El 10 de junio el rover envió su último paquete de datos, con el cielo muy oscuro y unos −29 °C; el Sol casi no llegó a sus paneles durante unos cuatro meses.',
+      science:
+        'Opportunity no tenía motor nuclear: vivía de la luz solar. El JPL estimó una opacidad (tau) de 10,8 el 10 de junio, es decir, casi nada de Sol llegaba al suelo. Por eso un rover diseñado para 90 días resistió casi quince años… hasta una noche de polvo.',
+      sources: [
+        {
+          label: 'JPL — Opportunity Hunkers Down During Dust Storm',
+          url: 'https://www.jpl.nasa.gov/news/opportunity-hunkers-down-during-dust-storm/',
+        },
+      ],
+      focus: 'panels',
     },
   ],
 

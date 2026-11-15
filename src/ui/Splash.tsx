@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { INTRO_SEEN_KEY, TOUR_SEEN_KEY, prefersReducedMotion, readFlag, writeFlag } from '../lib/prefs'
 import { ZoomRoverIntro } from './ZoomRoverIntro'
+import { startMenuMusic, userHasInteracted } from '../story/audio'
 
 const LEAVE_MS = 500
 
@@ -22,6 +23,8 @@ export function Splash() {
     if (left.current) return
     left.current = true
     writeFlag(INTRO_SEEN_KEY)
+    // Música del menú: el clic/tecla que entra es el gesto que el navegador exige (en el auto-avance, empezará con el primer clic).
+    if (userHasInteracted()) startMenuMusic(useAppStore.getState().soundOn)
     setLeaving(true)
     setTimeout(() => {
       setStage('solar-map')

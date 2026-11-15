@@ -49,7 +49,7 @@ export const MISSIONS: Mission[] = [
     launchYear: '1996',
     modelPath: '/models/mars/pathfinder.glb',
     povAnchor: 'pov_eye',
-    latlon: [19.13, -33.22],
+    latlon: [19.33, -33.55],
     summary: '1997: el primer rover en Marte, con un aterrizaje protegido por airbags que rebotaron.',
   },
   {
@@ -74,9 +74,8 @@ export const MISSIONS: Mission[] = [
     launchYear: '2018',
     modelPath: '/models/mars/insight.glb',
     povAnchor: 'pov_eye',
-    latlon: [4.5, 135.6],
+    latlon: [4.5, 135.9],
     summary: 'Escuchó "martemotos" y reveló el interior de Marte.',
-    lastWords: 'My power\'s really low, so this may be the last image I can send.',
   },
   {
     id: 'ingenuity',

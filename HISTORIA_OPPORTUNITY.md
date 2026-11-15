@@ -352,7 +352,7 @@ Para que cada capítulo sea defendible ante un revisor:
 
 ## 9. Fuera de alcance por ahora
 
-- **Los "¿Qué pasaría si…?" no se desarrollan.** Quedan *reservados* los puntos de bifurcación que ya define `PLAN.md` §8 (Opportunity: la tormenta de 2018), sin guion ni UI hasta nueva orden.
+- **"¿Qué pasaría si…?" (piloto implementado como tarjeta de Explorar):** *"…la tormenta de polvo de 2018 no hubiera tapado el Sol"*. Vive en `whatIfs` de `src/data/stories/opportunity.ts` y se muestra como tarjeta expandible (Imagina · Lo que sí pasó · La ciencia detrás) en el panel izquierdo del modo Explorar, marcada HIPOTÉTICO. Lección: un rover solar vive de la luz (tau estimado 10,8; Sol tapado ~4 meses; fuente JPL [15]). El texto de "Imagina" es licencia narrativa; "Lo que sí pasó" y "La ciencia" salen de la fuente.
 - Los otros 6 robots (Eagle, Surveyor 3, Pathfinder, InSight, Ingenuity, Pioneer 10): se reutilizará esta estructura (§3, §4, §6) cuando este piloto se apruebe.
 
 ---
@@ -433,3 +433,11 @@ El piloto ya corre en la app (entrar a **Marte → Opportunity**). Voces pendien
 **Licencias narrativas añadidas (§8):** el viaje se ve con cámara exterior cinematográfica (el rover real viajaba plegado y no veía nada); la velocidad de avance está acelerada (~0,3–0,7 m/s; la real era de máx. 3,75 cm/s); relieve, colores, tamaño de las *blueberries* y trayectoria exacta de los rebotes son estilizados, sin datos de elevación reales. No se muestra el número de rebotes.
 
 **Código:** `src/three/environments/places.ts` (lugares), `Ground.tsx` (suelo, huellas, polvo), `FlightScene.tsx` + `flightPath.ts` + `src/three/Spacecraft.tsx` (viaje), `StoryCamera.tsx` (vistas `part` y `flight`).
+
+### Recorte de duración (v3)
+
+Duración total ≈ 6 min 14 s (antes ≈ 7 min 30 s): cap. 1 = 96 s · cap. 2 = 94 s · **cap. 3 = 104 s** (antes 158) · **cap. 4 = 62 s** (antes 78) · **cap. 5 = 68 s** (antes 80).
+- Cap. 3: se fusionaron frases (blueberries + formación; Endeavour + "condiciones más amigables"), y se quitaron "el viento limpia mis paneles" y "mi equipo planea correr el maratón en relevos". Las tres escenas duran ≈ 34 / 30 / 40 s.
+- Cap. 4: frases más breves; se omite "y avisan a mi equipo".
+- Cap. 5: el legado pasa de ≈ 65 s a ≈ 53 s (se unieron la cita del director y el dato de Perseverance Valley).
+- **Menos escenas estáticas:** el cap. 3 abre con el brazo sobre la roca y una panorámica; cámara exterior mientras está atascado y mientras rueda por Endeavour; el cap. 4 alterna POV con una vista exterior bajo el cielo oscuro y deriva lenta de la mirada; el legado alterna primeros planos lentos de sus ojos y de sus ruedas con la vista exterior.

@@ -17,6 +17,8 @@ export function Overlay() {
   const transitionTo = useAppStore((s) => s.transitionTo)
   const backToPlanet = useAppStore((s) => s.backToPlanet)
   const setStage = useAppStore((s) => s.setStage)
+  const soundOn = useAppStore((s) => s.soundOn)
+  const patchStory = useAppStore((s) => s.patchStory)
   const cameraMode = useAppStore((s) => s.cameraMode)
   const setCameraMode = useAppStore((s) => s.setCameraMode)
 
@@ -26,6 +28,18 @@ export function Overlay() {
   return (
     <div className="pointer-events-none absolute inset-0 z-20">
       {stage === 'solar-map' && <SolarMenu />}
+
+      {(stage === 'solar-map' || stage === 'planet-map') && (
+        <button
+          onClick={() => patchStory({ soundOn: !soundOn })}
+          aria-label={soundOn ? 'Silenciar la música' : 'Activar la música'}
+          aria-pressed={!soundOn}
+          title={soundOn ? 'Silenciar' : 'Activar sonido'}
+          className="pointer-events-auto absolute bottom-4 right-4 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/20 bg-slate-950/60 text-base text-slate-200 backdrop-blur-md transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
+        >
+          {soundOn ? '🔊' : '🔇'}
+        </button>
+      )}
 
       {stage === 'planet-map' && selectedLocation && (
         <div className="flex h-full flex-col items-center justify-between py-6">

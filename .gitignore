@@ -5,3 +5,6 @@ dist
 
 blender/_previews/
 __pycache__/
+
+.env
+.env.*

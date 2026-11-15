@@ -2,15 +2,23 @@ import { useEffect } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { sampleLinear, sampleStep, type PlaceId, type Story, type StoryChapter } from '../data/story'
 import { opportunityStory } from '../data/stories/opportunity'
+import { ingenuityStory } from '../data/stories/ingenuity'
+import { insightStory } from '../data/stories/insight'
+import { pathfinderStory } from '../data/stories/pathfinder'
 import { pioneer10Story } from '../data/stories/pioneer10'
 import { eagleStory } from '../data/stories/eagle'
 import { surveyor3Story } from '../data/stories/surveyor3'
 import { resetRuntime, storyRuntime } from './runtime'
-import { playSfx, setAudioPaused, setSoundEnabled, startAudio, stopAudio, updateAmbient } from './audio'
+import { exploreControls } from './explore'
+import { driveControls, stepDrive } from './drive'
+import { playSfx, setAudioPaused, setSoundEnabled, setMusic, speak, startAudio, stopVoice, stopAudio, updateAmbient } from './audio'
 
 /** Historias disponibles por misión. Las demás misiones todavía no tienen guion. */
 const STORIES: Record<string, Story> = {
   opportunity: opportunityStory,
+  ingenuity: ingenuityStory,
+  insight: insightStory,
+  pathfinder: pathfinderStory,
   pioneer10: pioneer10Story,
   eagle: eagleStory,
   surveyor3: surveyor3Story,
@@ -61,9 +69,32 @@ export const storyControls = {
     jumpTo?.(0, 0)
   },
   restart() {
-    useAppStore.getState().patchStory({ storyEnded: false, isPlaying: true })
+    useAppStore.getState().patchStory({ storyEnded: false, isPlaying: true, viewOverride: 'auto' })
     startAudio()
     jumpTo?.(0, 0)
+  },
+  /** Al terminar la historia: recorrer la zona con el robot (solo si `explore.drive` está definido). */
+  startDrive() {
+    const s = useAppStore.getState()
+    const st = getStory(s.selectedMissionId)
+    const cfg = st?.explore?.drive
+    if (!st || !cfg) return
+    startAudio()
+    driveControls.enter(cfg, st.explore?.place ?? 'generic')
+    setAudioPaused(false)
+    s.patchStory({ isPlaying: false, cameraMode: 'drive', viewOverride: 'wide', activeHotspotId: null })
+  },
+  /** Tras el final, en robots que no se mueven: examinar el robot (órbita, acciones y tarjetas). */
+  exploreAfterEnd() {
+    startAudio()
+    setAudioPaused(false)
+    useAppStore.getState().patchStory({ cameraMode: 'free' })
+  },
+  /** Vuelve de la conducción a la pantalla final. */
+  exitDrive() {
+    driveControls.exit()
+    useAppStore.getState().patchStory({ cameraMode: 'guided', viewOverride: 'auto', storyClip: 'Idle' })
+    setAudioPaused(true)
   },
   /** Salta a un capítulo y segundo concretos (para depuración y revisión). */
   seek(chapter: number, t = 0) {
@@ -112,6 +143,7 @@ export function StoryDirector() {
       storyClip: null,
       storyExpression: null,
       storyView: 'pov',
+      viewOverride: 'auto',
       storyPlace: st.chapters[0].place0,
       storyPart: null,
       storyScene: 'surface',
@@ -125,6 +157,8 @@ export function StoryDirector() {
     let firedSfx = new Set<number>()
     let firedBlink = new Set<number>()
     let lastKey = ''
+    let lastCue = -1
+    let exploring = false
 
     jumpTo = (ci, to = 0) => {
       if (ci >= st.chapters.length) {
@@ -134,15 +168,19 @@ export function StoryDirector() {
         setAudioPaused(true)
         return
       }
+      stopVoice()
+      // El título del capítulo solo reaparece si cambia de capítulo (no al mover la barra dentro del mismo).
+      const changed = Math.max(0, ci) !== chapter || to === 0
       chapter = Math.max(0, ci)
       t = to
       firedSfx = new Set()
       firedBlink = new Set()
       lastKey = ''
+      lastCue = -1
       storyRuntime.chapter = chapter
       useAppStore.getState().patchStory({
         currentChapterIndex: chapter,
-        chapterBanner: useAppStore.getState().chapterBanner + 1,
+        chapterBanner: useAppStore.getState().chapterBanner + (changed ? 1 : 0),
         cueIndex: -1,
         activeCard: null,
         storyEnded: false,
@@ -157,6 +195,48 @@ export function StoryDirector() {
       const s = useAppStore.getState()
       const ch = st.chapters[chapter]
       if (!ch) return
+
+      // Modo Explorar: la historia se congela donde está y el robot se muestra en su escenario base,
+      // limpio de estática, polvo, vibración y desplazamientos del capítulo en curso.
+      const driving = s.cameraMode === 'drive'
+      if ((driving || s.cameraMode === 'free') && s.storyStarted) {
+        if (!exploring) {
+          exploring = true
+          stopVoice()
+          s.patchStory({
+            storyPlace: st.explore?.place ?? st.chapters[Math.min(2, st.chapters.length - 1)].place0,
+            storyScene: 'surface',
+            storyView: 'wide',
+            storyClip: 'Idle',
+            storyHold: null,
+            storyExpression: null,
+            storyPart: null,
+            cueIndex: -1,
+            activeCard: null,
+            exploreAction: null,
+          })
+        }
+        const odometer = storyRuntime.robotX // en conducción libre se conserva (fase del balanceo)
+        Object.assign(storyRuntime, {
+          staticLevel: 0, dust: 0, powerOff: 0, shake: 0, robotX: 0, speed: 0, pan: 0, sink: 0, slip: 0, blink: 0,
+          robotVisible: true, alt: 0, tilt: 0, gaze: 0, damage: 0, roverX: 999, battery: 1, signal: 1, spin: 0,
+        })
+        if (driving) storyRuntime.robotX = odometer
+        for (const k in storyRuntime.tracks) storyRuntime.tracks[k] = 0
+        storyRuntime.placeT += dt
+        setSoundEnabled(s.soundOn)
+        updateAmbient({ staticLevel: 0, dust: 0, battery: 1, scene: 'surface', powerOff: 0 })
+        if (driving) stepDrive(dt)
+        return
+      }
+      if (exploring) {
+        // Vuelta a la historia: se recalcula todo desde `t` y se retoma la voz de la línea en curso.
+        exploring = false
+        lastKey = ''
+        lastCue = -1
+        exploreControls.stop()
+        driveControls.exit()
+      }
 
       if (s.storyStarted && s.isPlaying && !s.storyEnded) {
         t += dt
@@ -186,6 +266,11 @@ export function StoryDirector() {
       for (const k in storyRuntime.tracks) storyRuntime.tracks[k] = 0
       for (const k in ch.tracks ?? {}) storyRuntime.tracks[k] = sampleLinear(ch.tracks?.[k], t, 0)
       storyRuntime.robotVisible = sampleStep(ch.robot, t, true)
+      storyRuntime.alt = sampleLinear(ch.alt, t, 0)
+      storyRuntime.tilt = sampleLinear(ch.tilt, t, 0) * (s.reduceEffects ? 0.5 : 1)
+      storyRuntime.gaze = sampleLinear(ch.gaze, t, 0)
+      storyRuntime.damage = sampleLinear(ch.damage, t, 0)
+      storyRuntime.roverX = sampleLinear(ch.rover, t, 999)
       storyRuntime.battery = sampleLinear(ch.battery, t, 1)
       storyRuntime.signal = sampleLinear(ch.signal, t, 1)
 
@@ -199,19 +284,31 @@ export function StoryDirector() {
       const card = (ch.cards ?? []).find((c) => t >= c.at && t < c.at + c.dur) ?? null
       const place = placeAt(ch, t)
       const part = view === 'part' ? sampleStep(ch.partFocus, t, null)?.hotspot ?? null : null
-      const key = `${scene}|${view}|${clip}|${expr}|${cue}|${card ? card.at : ''}|${place}|${part}`
+      storyRuntime.spin = clip === 'Fly' && s.isPlaying ? 1 : 0
+      const hold = ch.hold ?? null
+      const key = `${hold}|${scene}|${view}|${clip}|${expr}|${cue}|${card ? card.at : ''}|${place}|${part}`
       if (key !== lastKey) {
         lastKey = key
         s.patchStory({
           storyScene: scene,
           storyView: view,
           storyClip: clip,
+          storyHold: hold,
           storyExpression: expr,
           cueIndex: cue,
           activeCard: card,
           storyPlace: place,
           storyPart: part,
         })
+      }
+
+      // Música: una pista por tipo de capítulo (compartida entre historias)
+      if (s.storyStarted && !s.storyEnded) setMusic(ch.id)
+
+      // Voz: una línea por subtítulo
+      if (cue !== lastCue) {
+        lastCue = cue
+        if (cue >= 0 && s.storyStarted && s.isPlaying) speak(`${st.missionId}|${ch.id}|${cue}`)
       }
 
       // Efectos de sonido puntuales
@@ -230,19 +327,22 @@ export function StoryDirector() {
         })
       }
       setSoundEnabled(s.soundOn)
-      updateAmbient({
-        staticLevel: s.storyStarted ? storyRuntime.staticLevel : 0,
-        dust: storyRuntime.dust,
-        battery: storyRuntime.battery,
-        scene,
-        powerOff: storyRuntime.powerOff,
-      })
+      // Antes de despertar al robot solo suena la música del menú (sin viento ni tono de telemetría).
+      if (s.storyStarted)
+        updateAmbient({
+          staticLevel: storyRuntime.staticLevel,
+          dust: storyRuntime.dust,
+          battery: storyRuntime.battery,
+          scene,
+          powerOff: storyRuntime.powerOff,
+        })
     }
     raf = requestAnimationFrame(tick)
 
     return () => {
       cancelAnimationFrame(raf)
       jumpTo = null
+      driveControls.exit()
       stopAudio()
       resetRuntime()
       useAppStore.getState().patchStory({

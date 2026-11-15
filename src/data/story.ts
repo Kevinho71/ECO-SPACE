@@ -40,11 +40,23 @@ export type PlaceId =
   | 'victoria'
   | 'endeavour'
   | 'perseverance'
+  // Ingenuity (Jezero)
+  | 'jezero'
+  | 'airfield'
+  | 'outcrop'
+  | 'sandwaves'
+  // InSight (Elysium Planitia)
+  | 'elysium'
+  // Pathfinder (Ares Vallis)
+  | 'aresvallis'
   | DeepPlaceId
   | LunarPlaceId
 
-/** pov = ojo del robot · wide = vista exterior orbitando · part = primer plano de una pieza · flight = cámara cinematográfica del viaje */
-export type StoryView = 'pov' | 'wide' | 'part' | 'flight'
+/**
+ * pov = ojo del robot (1.ª persona) · wide = vista exterior orbitando · chase = cámara que persigue al robot en vuelo
+ * (3.ª persona) · part = primer plano de una pieza · flight = cámara cinematográfica del viaje
+ */
+export type StoryView = 'pov' | 'wide' | 'chase' | 'part' | 'flight'
 
 /** Pieza del robot que se enseña con la cámara 'part'. */
 export interface PartFocus {
@@ -99,6 +111,8 @@ export interface HudState {
   /** Etiqueta de fase (p. ej. durante el registro de vuelo). */
   phase?: string
   hidden?: boolean
+  /** Muestra la altitud en vivo (`storyRuntime.alt`) en la telemetría. */
+  showAlt?: boolean
 }
 
 export type SfxKind =
@@ -112,8 +126,11 @@ export type SfxKind =
   | 'powerdown'
   | 'relay'
   | 'blink'
+  | 'rotor' // rotores acelerando
   | 'alarm' // alarmas del ordenador (1202 / 1201)
   | 'thud' // golpe seco (contacto con el suelo)
+  | 'quake' // martemoto
+  | 'hammer' // golpecitos del topo
 
 export interface StoryCard {
   at: number
@@ -175,10 +192,22 @@ export interface StoryChapter {
   battery: Keyframe<number>[]
   signal: Keyframe<number>[]
   clips: Keyframe<string>[]
+  /** Clip que se queda en su última pose durante el capítulo, mezclado con el clip actual (si no comparten huesos). */
+  hold?: string
   expressions: Keyframe<Expression>[]
   hud: Keyframe<HudState>[]
   sfx?: Keyframe<SfxKind>[]
   cards?: StoryCard[]
+  /** Altura sobre el suelo (m) del robot, si vuela (Ingenuity). Interpolada. */
+  alt?: Keyframe<number>[]
+  /** Cabeceo hacia delante al volar (rad; positivo = morro abajo). Interpolado. */
+  tilt?: Keyframe<number>[]
+  /** Inclinación extra de la mirada del POV (rad; negativo = mirar hacia abajo). Interpolada. */
+  gaze?: Keyframe<number>[]
+  /** Posición (m, mismo eje que `robotX`) de Perseverance en el lugar actual; ≥ 900 = fuera de escena. Interpolada. */
+  rover?: Keyframe<number>[]
+  /** Deterioro 0–1 (interpolado): palas rotas (Ingenuity) o polvo sobre los paneles solares (InSight). */
+  damage?: Keyframe<number>[]
   /** Marcas de sub-escenas dentro del capítulo (se ven en la línea de tiempo). */
   marks?: { t: number; label: string }[]
   /** Hitos del registro de vuelo (solo capítulos con escena 'flight'). */
@@ -217,11 +246,88 @@ export const DEFAULT_STORY_TEXTS: StoryTexts = {
   endKicker: '¿Qué dijo de verdad?',
 }
 
+/**
+ * Tarjeta expandible "¿Qué pasaría si…?" del modo Explorar (contrafactual educativo).
+ * Siempre se muestra como HIPOTÉTICA; debe nacer de un hecho documentado y citar fuentes.
+ */
+export interface WhatIfCard {
+  id: string
+  /** Completa "¿Qué pasaría si …?" (sin signos). */
+  question: string
+  /** El escenario imaginado (1–3 frases, en condicional). */
+  imagine: string
+  /** Lo que sí ocurrió (el "reality check"). */
+  reality: string
+  /** La ciencia o ingeniería que explica el contraste. */
+  science: string
+  sources: { label: string; url: string }[]
+  /** Hotspot (id de `HOTSPOTS`) que se resalta al abrir la tarjeta. */
+  focus?: string
+  /** Acción del robot (`ExploreAction.id`) que ilustra la tarjeta. */
+  action?: string
+}
+
+/**
+ * Acción que el usuario puede lanzar en Explorar. Usa un clip del GLB (`clip`) o un movimiento por código
+ * (`motion`, ver `src/three/exploreActions.ts`), o ambos a la vez.
+ */
+export interface ExploreAction {
+  id: string
+  label: string
+  /** Frase corta bajo el botón. */
+  hint: string
+  /** Clip del GLB. Acabado en «!» = una sola vez y queda en su última pose hasta que acabe la acción. */
+  clip?: string
+  /** Movimiento procedural (clave de `EXPLORE_MOTIONS`). */
+  motion?: string
+  /** Segundos que dura antes de volver a Idle. */
+  duration: number
+  /** Hotspot que se enseña mientras dura. */
+  focus?: string
+}
+
+/**
+ * Conducción libre tras el final de la historia (solo robots que se mueven de verdad).
+ *  - 'wheels': el robot rueda por la zona (el suelo se desplaza bajo él).
+ *  - 'fly': vuela libremente sobre la zona (también sube y baja).
+ *  - 'rover-node': el robot principal se queda quieto y se maneja un rover que lleva dentro del modelo (Sojourner).
+ */
+export interface DriveConfig {
+  kind: 'wheels' | 'fly' | 'rover-node'
+  /** Velocidad máxima (m/s). Más rápida que la real, para que explorar sea ágil. */
+  maxSpeed: number
+  /** Nodo del GLB que se maneja (solo 'rover-node'). */
+  node?: string
+  /** Radio máximo (m) alrededor del punto de partida (solo 'rover-node'). Por defecto 14. */
+  radius?: number
+  /** Altura máxima (m) (solo 'fly'). Por defecto 12. */
+  maxAlt?: number
+  /** Texto del botón de la pantalla final. */
+  label: string
+}
+
+/** Modo Explorar: escenario base y acciones del robot. */
+export interface ExploreConfig {
+  /** Lugar en el que se explora el robot (superficie, sin depender del capítulo en curso). */
+  place: PlaceId
+  actions: ExploreAction[]
+  /** Si el robot se mueve, permite recorrer la zona al terminar la historia. */
+  drive?: DriveConfig
+}
+
 export interface Story {
   missionId: string
+  /** Tarjetas "¿Qué pasaría si…?" que aparecen al explorar el robot. */
+  whatIfs?: WhatIfCard[]
+  /** Escenario y acciones del modo Explorar. */
+  explore?: ExploreConfig
   /** Textos propios de las pantallas de esta historia (opcional). */
   texts?: Partial<StoryTexts>
   chapters: StoryChapter[]
+  /** Ajuste de la cámara 'wide' para robots pequeños: distancia de la órbita (m) y altura del punto que mira (m). */
+  view?: { wideDist: number; wideTarget: number }
+  /** Textos de la pantalla inicial. */
+  intro?: { kicker: string; name: string; blurb: string; button: string; short: string }
   /** Tarjeta de transparencia mostrada al terminar. */
   transparency: { title: string; body: string; sources: { label: string; url: string }[] }
 }

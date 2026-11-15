@@ -35,8 +35,10 @@ export function Hud() {
     return () => clearInterval(id)
   }, [])
 
+  const exploring = useAppStore((s) => s.cameraMode !== 'guided')
   const ch = story?.chapters[chapterIdx]
-  if (!ch) return null
+  // En Explorar no hay feed del robot: se oculta la telemetría de la historia.
+  if (!ch || exploring) return null
   const hud = sampleStep(ch.hud, storyRuntime.t, ch.hud[0].v)
   if (hud.hidden) return null
   const glitch = storyRuntime.staticLevel > 0.5 && Math.random() < 0.15
@@ -55,6 +57,7 @@ export function Hud() {
         <Bars value={storyRuntime.battery} label="BAT" />
         <Bars value={storyRuntime.signal} label="SEÑAL" />
       </div>
+      {hud.showAlt && <div className="mt-1 tracking-widest text-emerald-200">ALT {storyRuntime.alt.toFixed(1).replace('.', ',')} m</div>}
       {hud.temp && <div className="mt-1 tracking-widest text-sky-200">TEMP {hud.temp}</div>}
     </div>
   )

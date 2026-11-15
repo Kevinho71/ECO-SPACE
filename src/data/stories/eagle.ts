@@ -498,6 +498,33 @@ export const eagleStory: Story = {
     },
   ],
 
+  // Modo Explorar: escenario base y acciones del robot (clips del GLB).
+  explore: {
+    place: 'tranquility',
+    actions: [
+      { id: 'wake', label: 'Despertar', hint: 'Se enciende y mueve la placa y el plato', clip: 'Wake', duration: 2.5, focus: 'ladder' },
+      { id: 'land', label: 'Posarse', hint: 'Flexiona las cuatro patas al tocar el suelo', clip: 'Land', duration: 2.5, focus: 'legs' },
+      { id: 'dish', label: 'Apuntar el plato', hint: 'El plato de la antena se orienta a un lado y a otro', motion: 'eagle-dish', duration: 6 },
+    ],
+  },
+
+  whatIfs: [
+    {
+      id: 'alarma-1202',
+      question: 'la alarma 1202 hubiera obligado a abortar el alunizaje',
+      imagine:
+        'Si el control de la misión hubiera decidido abortar al oír la alarma, Eagle habría dejado de bajar y la tripulación no habría llegado a posarse en la Luna en ese intento.',
+      reality:
+        'Las alarmas 1202 y 1201 avisaron de que el ordenador estaba sobrecargado: un interruptor del radar mal configurado le hacía procesar datos que en realidad no estaban. En el control de la misión sabían que el ordenador estaba diseñado para reiniciarse y seguir, así que la misión continuó.',
+      science:
+        'Una alarma no siempre significa fallo grave. El ordenador de guiado estaba diseñado para reiniciarse y seguir; conocer ese límite de su diseño permitió distinguir un problema manejable de uno que obligaba a abortar.',
+      sources: [
+        { label: 'ALSJ — Apollo 11 Program Alarms (P. Adler)', url: 'https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.1201-pa.html' },
+      ],
+      action: 'land',
+    },
+  ],
+
   transparency: {
     title: '¿Aterrizó Eagle casi sin combustible?',
     body: 'Se contó muchas veces que a Eagle le quedaban apenas unos segundos. Durante el descenso, Houston avisó «60 segundos» de combustible, y eso alimentó la leyenda. Pero el análisis posterior de la NASA indica que quedaba más de lo que parecía en directo: un aviso en vivo y el dato final no siempre coinciden. Por eso esta historia no da una cifra de lo que quedaba.',

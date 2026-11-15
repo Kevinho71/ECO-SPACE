@@ -26,6 +26,8 @@ export interface PlaceDef {
   boulderColor: string
   mountains: { color: string; height: number }
   props?: 'eagle' | 'veins' | 'dunes'
+  /** ¿Dibuja huellas de ruedas? (false para el helicóptero). */
+  tracks?: boolean
 }
 
 const base = { flattenStart: 0, flattenEnd: 0.001 }
@@ -96,6 +98,61 @@ export const PLACES: Record<SurfacePlace, PlaceDef> = {
     startX: -35, driveMax: 45, pebbles: 1300, pebbleColor: '#a06a4a', boulders: 24, boulderColor: '#8c5438',
     mountains: { color: '#b0704a', height: 14 },
     props: 'veins',
+  },
+  // --- Ingenuity (cráter Jezero) ---
+  // Zona de despliegue: arena clara con guijarros; Perseverance se aleja.
+  jezero: {
+    sky: '#dca071', fogNear: 30, fogFar: 125, hemiSky: '#ffd9ae', hemiGround: '#6e4630',
+    size: 160, segments: 250,
+    terrain: { seed: 91, height: 0.3, ...base, craters: 3, ridge: { amp: 0.08, freq: 0.6, angle: 0.8 } },
+    colors: { low: '#8a6244', mid: '#b98a62', high: '#d8b58c' },
+    startX: -30, driveMax: 60, pebbles: 1700, pebbleColor: '#8e6446', boulders: 12, boulderColor: '#7d553b',
+    mountains: { color: '#a0744f', height: 11 }, tracks: false,
+  },
+  // Aeródromo: llanura casi plana y despejada para despegar y aterrizar.
+  airfield: {
+    sky: '#dea577', fogNear: 34, fogFar: 135, hemiSky: '#ffdcb4', hemiGround: '#72492f',
+    size: 160, segments: 250,
+    terrain: { seed: 93, height: 0.18, ...base, ridge: { amp: 0.05, freq: 0.45, angle: 0.3 } },
+    colors: { low: '#94694a', mid: '#c19468', high: '#dfbf94' },
+    startX: -30, driveMax: 70, pebbles: 1100, pebbleColor: '#98704f', boulders: 7, boulderColor: '#84593c',
+    mountains: { color: '#a67a54', height: 9 }, tracks: false,
+  },
+  // Afloramientos rocosos: el terreno que Ingenuity explora por delante del rover.
+  outcrop: {
+    sky: '#d99a68', fogNear: 30, fogFar: 125, hemiSky: '#ffd5a8', hemiGround: '#6a412b',
+    size: 160, segments: 250,
+    terrain: { seed: 97, height: 1.5, ...base, craters: 7, ridge: { amp: 0.15, freq: 0.35, angle: 1.0 } },
+    colors: { low: '#7a533b', mid: '#ab7a55', high: '#d0a47a' },
+    startX: -35, driveMax: 70, pebbles: 1000, pebbleColor: '#8a5e42', boulders: 46, boulderColor: '#74492f',
+    mountains: { color: '#98684a', height: 15 }, tracks: false,
+  },
+  // Ondas de arena lisas, todas iguales: casi sin textura para la cámara de navegación (vuelo 72).
+  sandwaves: {
+    sky: '#dfa87a', fogNear: 36, fogFar: 140, hemiSky: '#ffdfb8', hemiGround: '#8a6244',
+    size: 160, segments: 250,
+    terrain: { seed: 99, height: 0.05, ...base, ridge: { amp: 0.55, freq: 0.5, angle: 0.9 } },
+    colors: { low: '#c79a70', mid: '#cfa377', high: '#d6ac80' },
+    startX: -30, driveMax: 70, pebbles: 0, pebbleColor: '#c79a70', boulders: 0, boulderColor: '#c79a70',
+    mountains: { color: '#b98a62', height: 6 }, tracks: false,
+  },
+  // --- InSight (Elysium Planitia): llanura muy plana y lisa, casi sin rocas ---
+  elysium: {
+    sky: '#d8946a', fogNear: 32, fogFar: 130, hemiSky: '#ffd5a8', hemiGround: '#6e4128',
+    size: 160, segments: 250,
+    terrain: { seed: 105, height: 0.1, ...base, ridge: { amp: 0.04, freq: 0.5, angle: 0.6 } },
+    colors: { low: '#8a5538', mid: '#b4764c', high: '#cf9a70' },
+    startX: 0, driveMax: 10, pebbles: 450, pebbleColor: '#8a5a3e', boulders: 4, boulderColor: '#7a4a30',
+    mountains: { color: '#9a5e3c', height: 5 }, tracks: false,
+  },
+  // --- Pathfinder (Ares Vallis): antigua llanura de inundación, llena de rocas de todos los tamaños ---
+  aresvallis: {
+    sky: '#d98a60', fogNear: 24, fogFar: 100, hemiSky: '#ffcb98', hemiGround: '#6a3320',
+    size: 160, segments: 250,
+    terrain: { seed: 111, height: 0.35, ...base, craters: 2, ridge: { amp: 0.1, freq: 0.7, angle: 0.5 } },
+    colors: { low: '#7a4229', mid: '#b0623c', high: '#d49a72' },
+    startX: -10, driveMax: 20, pebbles: 1500, pebbleColor: '#8a4a30', boulders: 60, boulderColor: '#7d3f27',
+    mountains: { color: '#9a5636', height: 8 }, tracks: false,
   },
   // Perseverance Valley: canal en la ladera interior del borde, con la cuenca al fondo.
   perseverance: {

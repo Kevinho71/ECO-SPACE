@@ -22,7 +22,9 @@ export function MissionScene() {
   const missionId = useAppStore((s) => s.selectedMissionId)
   const cameraMode = useAppStore((s) => s.cameraMode)
   const storyClip = useAppStore((s) => s.storyClip)
+  const storyHold = useAppStore((s) => s.storyHold)
   const storyExpression = useAppStore((s) => s.storyExpression)
+  const exploreNonce = useAppStore((s) => s.exploreNonce)
   const started = useAppStore((s) => s.storyStarted)
   const playing = useAppStore((s) => s.isPlaying)
   const camera = useThree((s) => s.camera)
@@ -69,8 +71,11 @@ export function MissionScene() {
           <Robot
             path={mission.modelPath}
             clip={started ? storyClip : null}
+            hold={started ? storyHold : null}
             expression={storyExpression}
-            paused={started && !playing}
+            // En Explorar el robot sigue animándose aunque la historia esté en pausa.
+            paused={started && !playing && cameraMode === 'guided'}
+            nonce={exploreNonce}
             followRuntime
           />
         ) : (

@@ -3,7 +3,9 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { PlaceId } from '../../data/story'
 import { storyRuntime } from '../../story/runtime'
+import { driveRuntime } from '../../story/drive'
 import { getPlaceGeometry, placeHeight, surfaceDef, type PlaceDef } from './places'
+import { Rover } from './Rover'
 
 // Todo lo que hay aquí vive en coordenadas del TERRENO (x = xt, z = mundo) dentro de un grupo que MarsScene
 // desplaza según avanza el robot: así el robot no se mueve de sitio pero el suelo pasa por debajo.
@@ -213,7 +215,7 @@ function Tracks({ def }: { def: PlaceDef }) {
     const rear = def.startX + storyRuntime.robotX - 0.6
     built.forEach(({ g, x0 }) => {
       const n = THREE.MathUtils.clamp(Math.floor((rear - x0) / TRACK_STEP), 0, g.index!.count / 6)
-      g.setDrawRange(0, storyRuntime.active ? n * 6 : 0)
+      g.setDrawRange(0, storyRuntime.active && !driveRuntime.moveWorld ? n * 6 : 0)
     })
   })
 
@@ -230,6 +232,16 @@ function Tracks({ def }: { def: PlaceDef }) {
 
 const DUST_N = 90
 
+/** Punto del terreno a (a) metros por delante y (b) a la derecha del robot, y su rotación de vectores (por rumbo). */
+function atRobot(def: PlaceDef, a: number, b: number): { x: number; z: number; c: number; s: number } {
+  if (driveRuntime.active && driveRuntime.moveWorld) {
+    const c = Math.cos(driveRuntime.heading)
+    const s = Math.sin(driveRuntime.heading)
+    return { x: driveRuntime.x + a * c - b * s, z: driveRuntime.z + a * s + b * c, c, s }
+  }
+  return { x: def.startX + storyRuntime.robotX + a, z: b, c: 1, s: 0 }
+}
+
 function WheelDust({ def, color }: { def: PlaceDef; color: string }) {
   const ref = useRef<THREE.InstancedMesh>(null)
   const parts = useRef(
@@ -242,8 +254,26 @@ function WheelDust({ def, color }: { def: PlaceDef; color: string }) {
     const m = ref.current
     if (!m) return
     const list = parts.current
-    const moving = storyRuntime.active && storyRuntime.robotVisible && (storyRuntime.speed > 0.04 || storyRuntime.slip > 0.1)
-    if (moving) {
+    const moving = storyRuntime.active && storyRuntime.robotVisible && (storyRuntime.speed > 0.04 || storyRuntime.slip > 0.1) && storyRuntime.alt < 0.3
+    // Ingenuity: la corriente de los rotores levanta polvo cerca del suelo.
+    const wash = storyRuntime.active && storyRuntime.robotVisible ? storyRuntime.spin * Math.max(0, 1 - storyRuntime.alt / 7) : 0
+    if (wash > 0.05) {
+      carry.current += wash * 38 * dt
+      while (carry.current >= 1) {
+        carry.current -= 1
+        const q = list.find((x) => x.age >= x.life)
+        if (!q) break
+        const a = Math.random() * Math.PI * 2
+        const rr = 0.5 + Math.random() * 1.1
+        const w = atRobot(def, Math.cos(a) * rr, Math.sin(a) * rr)
+        q.p.set(w.x, placeHeight(def, w.x, w.z) + 0.06, w.z)
+        q.v.set(Math.cos(a) * (1.6 + Math.random()), 0.15 + Math.random() * 0.4, Math.sin(a) * (1.6 + Math.random()))
+        q.v.set(q.v.x * w.c - q.v.z * w.s, q.v.y, q.v.x * w.s + q.v.z * w.c)
+        q.age = 0
+        q.life = 0.8 + Math.random() * 0.8
+        q.s = 0.16 + Math.random() * 0.22
+      }
+    } else if (moving) {
       const rate = (storyRuntime.speed * 16 + storyRuntime.slip * 34) * (storyRuntime.sink > 0.01 ? 1.4 : 1)
       carry.current += rate * dt
       while (carry.current >= 1) {
@@ -251,10 +281,11 @@ function WheelDust({ def, color }: { def: PlaceDef; color: string }) {
         const q = list.find((x) => x.age >= x.life)
         if (!q) break
         const side = Math.random() < 0.5 ? -1 : 1
-        const xt = def.startX + storyRuntime.robotX - 0.55 - Math.random() * 0.5
-        const z = side * (0.5 + Math.random() * 0.4)
-        q.p.set(xt, placeHeight(def, xt, z) + 0.08, z)
-        q.v.set(-0.25 - Math.random() * 0.5, 0.25 + Math.random() * 0.45, side * (0.1 + Math.random() * 0.4))
+        const w = atRobot(def, -0.55 - Math.random() * 0.5, side * (0.5 + Math.random() * 0.4))
+        q.p.set(w.x, placeHeight(def, w.x, w.z) + 0.08, w.z)
+        const vx = -0.25 - Math.random() * 0.5
+        const vz = side * (0.1 + Math.random() * 0.4)
+        q.v.set(vx * w.c - vz * w.s, 0.25 + Math.random() * 0.45, vx * w.s + vz * w.c)
         q.age = 0
         q.life = 0.9 + Math.random() * 0.9
         q.s = 0.14 + Math.random() * 0.2
@@ -302,7 +333,8 @@ export function Ground({ place }: { place: PlaceId }) {
           <Scatter def={def} count={def.boulders} seed={place.length * 3.1 + 1} minS={0.35} maxS={1.3} color={def.boulderColor} shadows />
           {def.props === 'eagle' && <EagleProps def={def} />}
           {def.props === 'veins' && <VeinProps def={def} />}
-          <Tracks def={def} />
+          {def.tracks !== false && <Tracks def={def} />}
+          <Rover def={def} />
           <WheelDust def={def} color={def.colors.high} />
         </>
       ) : (

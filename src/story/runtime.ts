@@ -28,6 +28,14 @@ export const storyRuntime = {
   sink: 0,
   slip: 0,
   robotVisible: true,
+  /** Altura (m), cabeceo (rad), sesgo de la mirada (rad), daño de palas (0–1) y rotores girando (0–1). */
+  alt: 0,
+  tilt: 0,
+  gaze: 0,
+  damage: 0,
+  spin: 0,
+  /** Posición de Perseverance (m); ≥ 900 = fuera de escena. */
+  roverX: 999,
   /** Relieve bajo el robot (calculado por el escenario). */
   groundY: 0,
   pitch: 0,
@@ -57,6 +65,12 @@ export function resetRuntime() {
     sink: 0,
     slip: 0,
     robotVisible: true,
+    alt: 0,
+    tilt: 0,
+    gaze: 0,
+    damage: 0,
+    spin: 0,
+    roverX: 999,
     groundY: 0,
     pitch: 0,
     roll: 0,
