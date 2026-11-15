@@ -44,7 +44,7 @@ export function ScaledHtml({
 
   return (
     <group ref={anchor} position={position}>
-      <Html center style={{ pointerEvents: 'none' }}>
+      <Html center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
         <div ref={box} style={{ transformOrigin: 'center center', willChange: 'transform' }}>
           {children}
         </div>
