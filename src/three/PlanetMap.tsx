@@ -1,6 +1,7 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Html, OrbitControls, Sparkles, Stars, useCursor } from '@react-three/drei'
+import { OrbitControls, Sparkles, Stars, useCursor } from '@react-three/drei'
+import { ScaledHtml } from './ScaledHtml'
 import * as THREE from 'three'
 import { useAppStore } from '../store/useAppStore'
 import { MISSIONS } from '../data/catalog'
@@ -96,46 +97,158 @@ function Beacon({
   position,
   label,
   color = '#6ef7ff',
+  lit = false,
   onClick,
+  onHover,
 }: {
   position: [number, number, number]
   label: string
   color?: string
+  /** Resaltada desde fuera (tarjeta del catálogo) o por el ratón. */
+  lit?: boolean
   onClick: () => void
+  onHover?: (over: boolean) => void
 }) {
-  const [hovered, setHovered] = useState(false)
+  const [pointerOver, setPointerOver] = useState(false)
   const pulse = useRef<THREE.Mesh>(null)
-  useCursor(hovered)
+  useCursor(pointerOver)
 
   useFrame(({ clock }) => {
-    const s = 1 + 0.25 * Math.sin(clock.elapsedTime * 3)
+    const s = (lit ? 1.5 : 1) + 0.25 * Math.sin(clock.elapsedTime * 3)
     pulse.current?.scale.setScalar(s)
   })
 
   return (
     <group position={position}>
-      <mesh
-        ref={pulse}
-        onClick={(e) => { e.stopPropagation(); onClick() }}
-        onPointerOver={(e) => { e.stopPropagation(); setHovered(true) }}
-        onPointerOut={() => setHovered(false)}
+      <group
+        onClick={(e) => {
+          e.stopPropagation()
+          onClick()
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation()
+          setPointerOver(true)
+          onHover?.(true)
+        }}
+        onPointerOut={() => {
+          setPointerOver(false)
+          onHover?.(false)
+        }}
       >
-        <sphereGeometry args={[0.07, 20, 20]} />
-        <meshBasicMaterial color={color} />
-      </mesh>
-      {hovered && (
+        <mesh ref={pulse}>
+          <sphereGeometry args={[0.07, 20, 20]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+        {/* Zona de clic más grande que el punto visible. */}
         <mesh>
-          <sphereGeometry args={[0.16, 16, 16]} />
-          <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+          <sphereGeometry args={[0.2, 12, 12]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      </group>
+      {lit && (
+        <mesh>
+          <sphereGeometry args={[0.18, 16, 16]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.3} depthWrite={false} />
         </mesh>
       )}
-      <Html center distanceFactor={12} position={[0, 0.2, 0]} style={{ pointerEvents: 'none' }}>
-        <div className="select-none whitespace-nowrap text-xs font-medium text-white" style={LABEL_STYLE}>
+      <ScaledHtml position={[0, 0.2, 0]} refDistance={7} min={0.85} max={1.6}>
+        <div
+          className={`select-none whitespace-nowrap font-medium transition-colors ${lit ? 'text-sm text-amber-200' : 'text-xs text-white'}`}
+          style={LABEL_STYLE}
+        >
           {label}
         </div>
-      </Html>
+      </ScaledHtml>
     </group>
   )
+}
+
+interface ControlsLike {
+  target: THREE.Vector3
+  enabled: boolean
+  update: () => void
+}
+
+/**
+ * Vuelo alrededor del globo hacia una baliza: la dirección de la cámara gira sobre la
+ * esfera (slerp) en vez de ir en línea recta, así nunca atraviesa el planeta aunque
+ * el robot esté en la cara oculta.
+ */
+function SphereFly({
+  to,
+  approach = 1.6,
+  duration = 1.9,
+  onNearEnd,
+  onArrive,
+}: {
+  to: THREE.Vector3
+  approach?: number
+  duration?: number
+  onNearEnd?: () => void
+  onArrive?: () => void
+}) {
+  const camera = useThree((s) => s.camera)
+  const controls = useThree((s) => s.controls) as unknown as ControlsLike | null
+  const plan = useRef<{
+    start: number
+    dir: THREE.Vector3
+    dist: number
+    rot: THREE.Quaternion
+    endDist: number
+    tgt: THREE.Vector3
+  } | null>(null)
+  const done = useRef(false)
+  const nearFired = useRef(false)
+  const q = useMemo(() => new THREE.Quaternion(), [])
+  const identity = useMemo(() => new THREE.Quaternion(), [])
+  const tmp = useMemo(() => new THREE.Vector3(), [])
+
+  useEffect(() => {
+    if (controls) controls.enabled = false
+    return () => {
+      if (controls) controls.enabled = true
+    }
+  }, [controls])
+
+  useFrame(({ clock }) => {
+    if (done.current) return
+    if (!plan.current) {
+      const dir = camera.position.clone().normalize()
+      const endDir = to.clone().normalize()
+      plan.current = {
+        start: clock.elapsedTime,
+        dir,
+        dist: camera.position.length(),
+        rot: new THREE.Quaternion().setFromUnitVectors(dir, endDir),
+        endDist: to.length() + approach,
+        tgt: controls ? controls.target.clone() : new THREE.Vector3(),
+      }
+    }
+    const p = plan.current
+    const t = Math.min(1, (clock.elapsedTime - p.start) / duration)
+    const e = easeInOutCubic(t)
+
+    q.slerpQuaternions(identity, p.rot, e)
+    tmp.copy(p.dir).applyQuaternion(q)
+    camera.position.copy(tmp).multiplyScalar(THREE.MathUtils.lerp(p.dist, p.endDist, e))
+    if (controls) {
+      controls.target.lerpVectors(p.tgt, to, e * e)
+      controls.update()
+    } else {
+      camera.lookAt(to)
+    }
+
+    if (t >= 0.75 && !nearFired.current) {
+      nearFired.current = true
+      onNearEnd?.()
+    }
+    if (t >= 1) {
+      done.current = true
+      onArrive?.()
+    }
+  })
+
+  return null
 }
 
 /** Globo rotable de la Luna o Marte, con balizas en las coordenadas reales de las misiones. */
@@ -150,6 +263,23 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
   const missions = MISSIONS.filter((m) => m.location === location && m.latlon)
   const [ready, setReady] = useState(false)
   const [fly, setFly] = useState<{ target: THREE.Vector3; missionId: string } | null>(null)
+  const hoveredMission = useAppStore((s) => s.hoveredMission)
+  const setHoveredMission = useAppStore((s) => s.setHoveredMission)
+  const pendingMission = useAppStore((s) => s.pendingMission)
+
+  const flyToMission = (id: string) => {
+    if (fly) return
+    const m = missions.find((x) => x.id === id)
+    useAppStore.setState({ pendingMission: null })
+    if (!m) return
+    setFly({ target: new THREE.Vector3(...latLonToPosition(m.latlon![0], m.latlon![1], PLANET_RADIUS * 1.015)), missionId: id })
+  }
+
+  // Robot elegido desde el catálogo lateral (UI fuera del Canvas). Espera a que termine el dolly de entrada.
+  useEffect(() => {
+    if (pendingMission && ready) flyToMission(pendingMission)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMission, ready])
 
   return (
     <>
@@ -179,23 +309,24 @@ function PlanetSurface({ location }: { location: 'moon' | 'mars' }) {
             key={m.id}
             position={pos}
             label={m.nickname ?? m.name}
-            onClick={() => setFly({ target: new THREE.Vector3(...pos), missionId: m.id })}
+            lit={hoveredMission === m.id || fly?.missionId === m.id}
+            onClick={() => flyToMission(m.id)}
+            onHover={(over) => setHoveredMission(over ? m.id : null)}
           />
         )
       })}
 
       {fly && (
-        <FlyTo
-          target={fly.target}
-          approachDistance={1.6}
+        <SphereFly
+          to={fly.target}
+          approach={1.6}
           onNearEnd={() => transitionTo(() => selectMission(fly.missionId))}
-          onArrive={() => setFly(null)}
         />
       )}
 
       <OrbitControls
         makeDefault
-        enabled={ready}
+        enabled={ready && !fly}
         enableDamping
         dampingFactor={0.08}
         minDistance={4.5}
@@ -215,6 +346,19 @@ function BeyondMap() {
   const plan = useDollyPlan(lastMissionId, 1)
   const [ready, setReady] = useState(false)
   const [fly, setFly] = useState<{ target: THREE.Vector3; missionId: string } | null>(null)
+  const hoveredMission = useAppStore((s) => s.hoveredMission)
+  const setHoveredMission = useAppStore((s) => s.setHoveredMission)
+  const pendingMission = useAppStore((s) => s.pendingMission)
+
+  const flyToPioneer = () => {
+    useAppStore.setState({ pendingMission: null })
+    if (!fly) setFly({ target: new THREE.Vector3(0, 0, 0), missionId: 'pioneer10' })
+  }
+
+  useEffect(() => {
+    if (pendingMission && ready) flyToPioneer()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMission, ready])
 
   return (
     <>
@@ -230,7 +374,9 @@ function BeyondMap() {
         position={[0, 0, 0]}
         label="Pioneer 10"
         color="#6ef7ff"
-        onClick={() => setFly({ target: new THREE.Vector3(0, 0, 0), missionId: 'pioneer10' })}
+        lit={hoveredMission === 'pioneer10' || !!fly}
+        onClick={flyToPioneer}
+        onHover={(over) => setHoveredMission(over ? 'pioneer10' : null)}
       />
 
       {fly && (

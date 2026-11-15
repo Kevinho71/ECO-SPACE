@@ -11,15 +11,20 @@ interface ControlsLike {
 /**
  * Anima la cámara (y el objetivo de OrbitControls) hacia un punto, con easing.
  * Desactiva los controles durante el vuelo y los reactiva al terminar.
+ *
+ * Con `follow`, el destino se recalcula en cada fotograma a partir de la posición
+ * del objeto: así la cámara llega al planeta aunque siga moviéndose en su órbita.
  */
 export function FlyTo({
   target,
+  follow,
   approachDistance = 1.2,
   duration = 1.6,
   onNearEnd,
   onArrive,
 }: {
-  target: THREE.Vector3
+  target?: THREE.Vector3
+  follow?: THREE.Object3D | null
   approachDistance?: number
   duration?: number
   /** Se llama una vez al ~70 % del vuelo: ideal para empezar el fundido y que el corte quede oculto. */
@@ -32,6 +37,7 @@ export function FlyTo({
   const done = useRef(false)
   const nearFired = useRef(false)
   const dest = useMemo(() => new THREE.Vector3(), [])
+  const live = useMemo(() => new THREE.Vector3(), [])
 
   useEffect(() => {
     if (controls) controls.enabled = false
@@ -43,8 +49,11 @@ export function FlyTo({
   useFrame(({ clock }) => {
     if (done.current) return
 
+    if (follow) follow.getWorldPosition(live)
+    else if (target) live.copy(target)
+
     if (!state.current) {
-      const dir = new THREE.Vector3().subVectors(camera.position, target).normalize()
+      const dir = new THREE.Vector3().subVectors(camera.position, live).normalize()
       if (dir.lengthSq() < 1e-6) dir.set(0, 0, 1)
       state.current = {
         start: clock.elapsedTime,
@@ -55,14 +64,16 @@ export function FlyTo({
     }
 
     const { start, cam, tgt, dir } = state.current
-    dest.copy(target).addScaledVector(dir, approachDistance)
+    dest.copy(live).addScaledVector(dir, approachDistance)
     const t = Math.min(1, (clock.elapsedTime - start) / duration)
     const e = 1 - Math.pow(1 - t, 3) // easeOutCubic
 
     camera.position.lerpVectors(cam, dest, e)
     if (controls) {
-      controls.target.lerpVectors(tgt, target, e)
+      controls.target.lerpVectors(tgt, live, e)
       controls.update()
+    } else {
+      camera.lookAt(live)
     }
 
     if (t >= 0.7 && !nearFired.current) {
