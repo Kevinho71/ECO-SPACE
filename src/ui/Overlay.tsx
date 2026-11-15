@@ -1,6 +1,8 @@
 import { useAppStore, type LocationId } from '../store/useAppStore'
 import { MISSIONS } from '../data/catalog'
 import { getStory } from '../story/StoryDirector'
+import { SolarMenu } from './SolarMenu'
+import { PlanetCatalog } from './PlanetCatalog'
 
 const LOCATION_LABEL: Record<LocationId, string> = {
   moon: 'Luna',
@@ -23,6 +25,8 @@ export function Overlay() {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20">
+      {stage === 'solar-map' && <SolarMenu />}
+
       {stage === 'planet-map' && selectedLocation && (
         <div className="flex h-full flex-col items-center justify-between py-6">
           <div className="flex flex-col items-center px-6 text-center">
@@ -30,12 +34,18 @@ export function Overlay() {
               {LOCATION_LABEL[selectedLocation]}
             </p>
             <p className="mt-2 text-lg text-slate-200">
-              Gira el planeta y haz clic en un punto brillante para encontrar los robots abandonados
+              Elige un robot del catálogo o gira el planeta y haz clic en un punto brillante
             </p>
           </div>
+
+          {/* Catálogo: columna a la izquierda en escritorio; tira horizontal abajo en móvil. */}
+          <div className="absolute bottom-20 left-0 right-0 px-4 md:bottom-6 md:left-6 md:right-auto md:top-28 md:flex md:items-start md:px-0">
+            <PlanetCatalog location={selectedLocation} />
+          </div>
+
           <button
             onClick={() => transitionTo(() => setStage('solar-map'))}
-            className="pointer-events-auto rounded-full border border-white/20 px-6 py-2 text-sm text-slate-300 transition hover:bg-white/10"
+            className="pointer-events-auto rounded-full border border-white/20 px-6 py-2 text-sm text-slate-300 transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
           >
             Volver al mapa
           </button>

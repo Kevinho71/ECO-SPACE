@@ -41,6 +41,20 @@ interface AppState {
   cameraMode: CameraMode
   activeHotspotId: string | null
 
+  // Menú principal (sistema solar)
+  /** Destino resaltado (ratón sobre el planeta, sobre su botón o foco del teclado). */
+  hoveredLocation: LocationId | null
+  /** Destino pedido desde la barra de destinos: el sistema solar vuela hacia él y lo limpia. */
+  pendingLocation: LocationId | null
+  /** Paso del recorrido guiado: 0..2 = Luna, Marte, Más allá; 3 = vuelta a la vista general; null = inactivo. */
+  tourStep: number | null
+
+  // Mapa planetario
+  /** Robot resaltado (ratón sobre su baliza o sobre su tarjeta del catálogo). */
+  hoveredMission: string | null
+  /** Robot pedido desde el catálogo lateral: el globo vuela hacia su baliza y lo limpia. */
+  pendingMission: string | null
+
   // Acciones
   setStage: (stage: ViewStage) => void
   selectLocation: (loc: LocationId) => void
@@ -51,6 +65,11 @@ interface AppState {
   setCameraMode: (mode: CameraMode) => void
   selectHotspot: (id: string | null) => void
   patchStory: (p: Partial<AppState>) => void
+  setHoveredLocation: (loc: LocationId | null) => void
+  requestLocation: (loc: LocationId) => void
+  setTourStep: (step: number | null) => void
+  setHoveredMission: (id: string | null) => void
+  requestMission: (id: string) => void
   /** Funde a negro, ejecuta `fn` (cambio de escena) y vuelve a mostrar. Ignora llamadas mientras hay una en curso. */
   transitionTo: (fn: () => void) => void
   /** Vuelve de la escena de un robot al mapa planetario (con acercamiento inverso). */
@@ -85,17 +104,41 @@ export const useAppStore = create<AppState>((set, get) => ({
   reduceEffects: false,
   veil: false,
   arrival: 'enter',
+  hoveredLocation: null,
+  pendingLocation: null,
+  tourStep: null,
+  hoveredMission: null,
+  pendingMission: null,
 
   setStage: (stage) => set({ stage }),
-  selectLocation: (loc) => set({ selectedLocation: loc, stage: 'planet-map', arrival: 'enter' }),
+  selectLocation: (loc) =>
+    set({
+      selectedLocation: loc,
+      stage: 'planet-map',
+      arrival: 'enter',
+      hoveredLocation: null,
+      pendingLocation: null,
+      tourStep: null,
+    }),
   selectMission: (id) =>
-    set({ selectedMissionId: id, stage: 'mission-scene', currentChapterIndex: 0 }),
+    set({
+      selectedMissionId: id,
+      stage: 'mission-scene',
+      currentChapterIndex: 0,
+      hoveredMission: null,
+      pendingMission: null,
+    }),
   setChapter: (i) => set({ currentChapterIndex: i }),
   togglePlay: () => set((s) => ({ isPlaying: !s.isPlaying })),
   toggleWhatIf: (active) => set({ isWhatIfActive: active }),
   setCameraMode: (mode) => set({ cameraMode: mode }),
   selectHotspot: (id) => set({ activeHotspotId: id }),
   patchStory: (p) => set(p),
+  setHoveredLocation: (loc) => set({ hoveredLocation: loc }),
+  requestLocation: (loc) => set({ pendingLocation: loc }),
+  setTourStep: (step) => set({ tourStep: step }),
+  setHoveredMission: (id) => set({ hoveredMission: id }),
+  requestMission: (id) => set({ pendingMission: id }),
   transitionTo: (fn) => {
     if (transitioning) return
     transitioning = true
