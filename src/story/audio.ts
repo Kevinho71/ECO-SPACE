@@ -188,6 +188,13 @@ export function playSfx(kind: SfxKind) {
     case 'blink':
       burst({ dur: 0.12, freq: 1400, gain: 0.12, type: 'bandpass', sweepTo: 600 })
       break
+    case 'thud':
+      burst({ dur: 0.5, freq: 170, gain: 0.6, sweepTo: 55 })
+      break
+    case 'alarm':
+      // dos pares de pitidos secos
+      ;[0, 0.22, 0.6, 0.82].forEach((d) => setTimeout(() => beep(1050, 0.14, 0.09, 'square'), d * 1000))
+      break
     case 'relay':
       burst({ dur: 0.06, freq: 2500, gain: 0.7, type: 'bandpass' })
       beep(90, 0.08, 0.2, 'square')

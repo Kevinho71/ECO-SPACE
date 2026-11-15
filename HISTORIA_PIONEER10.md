@@ -247,3 +247,46 @@
 2. NSSDC — *Pioneer 10 (1972-012A)*: https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1972-012A
 3. NASA History — *50 Years Ago: Pioneer 10 Launches to Explore Jupiter*: https://www.nasa.gov/history/50-years-ago-pioneer-10-launches-to-explore-jupiter/
 4. NASA Science — *10 Things About the Pioneer Spacecraft*: https://science.nasa.gov/missions/pioneer/pioneer-11/10-things-about-pioneer-spacecraft/
+
+---
+
+## 12. Implementación (estado)
+
+- **Guion:** `src/data/stories/pioneer10.ts` (5 capítulos, subtítulos, sin voces todavía). Registrado en `src/story/StoryDirector.tsx`.
+- **Hotspots:** `src/data/hotspots.ts` → `pioneer10` (antena, RTG, magnetómetro, placa, antena omnidireccional), con nodos verificados en `pioneer10.glb`.
+- **Escena:** espacio profundo (`DeepSpace`, datos en `deepPlaces.ts`), sin suelo ni viento. Escena `flight` para la telemetría. Ver §13.
+- **Cámaras:** `pov` y `wide` alternadas según la narración (ver §13), más `part` para la placa. No se usa la cámara `flight` de la guía: `flightShot` solo cubre lanzamiento, crucero y entrada.
+- **Clips del GLB:** `Wake` (despertar), `Spin` (crucero), `Idle` (final), `Death` (corte). Morphs: `Sad`, `Surprised`, `Sleep`.
+- **Pendiente de verificar visualmente:** encuadre de los hotspots y comportamiento del `Spin` (la rotación de estabilización es licencia, ver §8).
+- **Pendiente de datos:** la placa de `catalog.ts` dice "dorada"; la NASA dice aluminio (§2.2).
+
+---
+
+## 13. Escenas y vistas (animación)
+
+La sonda se queda quieta; lo que cambia es **el mundo que pasa** (lugares con parpadeo entre ellos) y **la cámara**, que alterna entre el ojo de la sonda (**POV**) y una vista exterior (**3.ª persona**, `wide`). Ejes: la sonda mira a +X (Tierra y Sol quedan detrás); viaja hacia −X.
+
+**Por qué se alterna:** el plato de 3 m tapa lo que viene de frente, así que lo que se acerca desde delante (Júpiter, los asteroides) se ve **desde fuera**, y lo que pasa a un lado o se aleja hacia atrás (la Tierra, un planeta abeam) se ve **desde el ojo**. El POV mantiene el horizonte casi fijo (`povRoll` 0,25) porque el giro real de la sonda marearía; el giro (`Spin`) solo se ve desde fuera.
+
+| Cap. | Lugares (parpadeo en `t`) | Vistas (`t` en s) |
+|---|---|---|
+| 1 | `leaving-earth` → `outbound` (34,65) | POV 0 · 3.ª 10,65 · POV 27,65 · 3.ª 34,65 |
+| 2 | `inner` → `belt` (13,65) → `outbound` (21,65) | 3.ª 0 · POV 7 · 3.ª 13,65 · POV 17,65 · 3.ª 26,65 |
+| 3 | `jupiter` → `jupiter-moons` (36,65) → `jupiter-tail` (45,65) | 3.ª 0 · POV 16 · 3.ª 36,65 · POV 53,65 |
+| 4 | `neptune` → `interstellar` (17,65) | 3.ª 0 · POV 5,65 · 3.ª 11,65 · POV 17,65 · 3.ª 31,65 · POV 36,65 |
+| 5 | `interstellar` → `aldebaran` (11,65) | POV 0 · 3.ª 11,65 · primer plano de la placa 35,65 · 3.ª 54,65 |
+
+**Qué se ve en cada lugar** (todo es función del tiempo del lugar, ver `deepPlaces.ts`): la Tierra que se encoge y el Sol detrás · Marte pasando de largo · el cinturón: 70 asteroides que pasan a más de 5 de la sonda, con densidad que sube y baja · Júpiter acercándose, pasando a un lado y llenando la vista (los datos de radiación suben la estática, sin taparlo) · las lunas cruzando delante de Júpiter, con Ío que **parpadea y desaparece** (la radiación apaga su imagen) · la cola magnética hacia delante y Júpiter alejándose · Neptuno lejos y un Sol pequeño · espacio interestelar con **anillos de señal** que salen hacia la Tierra y se apagan con la señal · Aldebarán, roja, al frente.
+
+**Duraciones:** el cap. 2 dura 44 s (el doc estimaba ~55 s): el guion solo ocupa unos 36 s y no se alarga con silencio.
+
+### Hecho vs. licencia (animación)
+- **Licencias de escala:** los tamaños y distancias de planetas, lunas y asteroides son de narración, no reales; el cinturón real es casi vacío. Los asteroides, Marte y Neptuno **no aparecen en las fuentes consultadas como imágenes de Pioneer 10**: son ambientación.
+- **Licencia de movimiento:** la velocidad con que pasan los cuerpos y el polvo es visual, no calculada.
+- **Licencia del giro:** `Spin` (la sonda girando) **no está verificado** en las fuentes leídas; se usa solo en vista exterior.
+- **Licencia de Júpiter:** que Júpiter "pase a la izquierda" y quede casi quieto durante la visita de las lunas es una simplificación (el sobrevuelo real duró semanas).
+- **Licencia de las lunas:** el orden y el color de las lunas es ilustrativo; solo es dato verificado que Pioneer 10 fotografió Calisto, Ganímedes y Europa y que la imagen de Ío se perdió por la radiación.
+- **Licencia de los anillos:** los anillos de señal representan que la sonda se comunica con la Tierra; no son una medición.
+
+### Sin verificar visualmente
+Las posiciones de cámara y de los cuerpos se calcularon por geometría, **sin capturas**. Revisar con `seek` (guiado + pausa) los momentos: cap. 1 t=0, 11, 35 · cap. 2 t=3, 14, 30 · cap. 3 t=5, 20, 38, 50, 60 · cap. 4 t=2, 8, 40 · cap. 5 t=5, 20, 40.

@@ -2,12 +2,18 @@ import { useEffect } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { sampleLinear, sampleStep, type PlaceId, type Story, type StoryChapter } from '../data/story'
 import { opportunityStory } from '../data/stories/opportunity'
+import { pioneer10Story } from '../data/stories/pioneer10'
+import { eagleStory } from '../data/stories/eagle'
+import { surveyor3Story } from '../data/stories/surveyor3'
 import { resetRuntime, storyRuntime } from './runtime'
 import { playSfx, setAudioPaused, setSoundEnabled, startAudio, stopAudio, updateAmbient } from './audio'
 
 /** Historias disponibles por misión. Las demás misiones todavía no tienen guion. */
 const STORIES: Record<string, Story> = {
   opportunity: opportunityStory,
+  pioneer10: pioneer10Story,
+  eagle: eagleStory,
+  surveyor3: surveyor3Story,
 }
 
 export function getStory(missionId: string | null): Story | null {
@@ -22,6 +28,13 @@ export function placeAt(ch: StoryChapter, t: number): PlaceId {
   let p = ch.place0
   for (const j of ch.jumps ?? []) if (t >= j.t + BLINK_SWAP) p = j.to
   return p
+}
+
+/** Segundo del capítulo en que empezó el lugar actual (el cambio ocurre en lo más oscuro del parpadeo). */
+function placeEntry(ch: StoryChapter, t: number): number {
+  let e = 0
+  for (const j of ch.jumps ?? []) if (t >= j.t + BLINK_SWAP) e = j.t + BLINK_SWAP
+  return e
 }
 
 /** Cuánto están cerrados los párpados (0–1) en el instante t. */
@@ -168,6 +181,10 @@ export function StoryDirector() {
       storyRuntime.sink = sampleLinear(ch.sink, t, 0)
       storyRuntime.slip = sampleLinear(ch.slip, t, 0) * (s.isPlaying ? 1 : 0)
       storyRuntime.blink = blinkAt(ch, t)
+      storyRuntime.placeT = t - placeEntry(ch, t)
+      // Pistas numéricas con nombre: las que no tiene este capítulo vuelven a 0.
+      for (const k in storyRuntime.tracks) storyRuntime.tracks[k] = 0
+      for (const k in ch.tracks ?? {}) storyRuntime.tracks[k] = sampleLinear(ch.tracks?.[k], t, 0)
       storyRuntime.robotVisible = sampleStep(ch.robot, t, true)
       storyRuntime.battery = sampleLinear(ch.battery, t, 1)
       storyRuntime.signal = sampleLinear(ch.signal, t, 1)
